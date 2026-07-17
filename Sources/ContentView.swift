@@ -383,6 +383,11 @@ struct ContentView: View {
                     .padding(.bottom, 34)
             }
             .overlay { DreamGlow().opacity(Double(dreamReveal)) }
+            // Escape hatch: the expand button sits near the feathered edge and
+            // the window is movable-by-background, so a double-click anywhere
+            // reliably restores the full window even if the button is hard to hit.
+            .contentShape(Rectangle())
+            .onTapGesture(count: 2) { model.collapsed = false }
         }
         .frame(minWidth: CollapseWindowStyler.collapsedSize.width,
                minHeight: CollapseWindowStyler.collapsedSize.height)
@@ -398,16 +403,24 @@ struct ContentView: View {
                 model.collapsed = false
             } label: {
                 Image(systemName: "arrow.down.left.and.arrow.up.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .frame(width: 28, height: 28)
+                    .background(.white.opacity(0.18), in: Circle())
+                    // Make the whole circle tappable, not just the glyph.
+                    .contentShape(Circle())
             }
             .buttonStyle(.plain)
             .help("Expand")
         }
         .font(.system(size: 10, design: .monospaced))
         .foregroundStyle(.white.opacity(0.85))
-        .padding(.horizontal, 12)
+        .padding(.leading, 12)
+        .padding(.trailing, 6)
         .padding(.vertical, 6)
         .background(.ultraThinMaterial, in: Capsule())
-        .padding(.bottom, 20)
+        // Sit above the ~30pt feathered/blurred edge so the control stays
+        // visible and hittable rather than fading into the dream mask.
+        .padding(.bottom, 40)
         .padding(.horizontal, 24)
     }
 

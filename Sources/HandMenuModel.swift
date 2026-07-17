@@ -102,6 +102,10 @@ final class HandMenuModel: ObservableObject {
 
     func start() async {
         applySettings()
+        // `mirrored`'s didSet does not fire at init, so push the current value
+        // into the pipeline explicitly or the coordinate flip runs on its own
+        // default until the user first toggles the control.
+        pipeline.mirrored = mirrored
         mouseEngine.onClick = { StatsStore.shared.countClick() }
         commands.onFired = { [weak self] cmd, label in
             guard let self else { return }

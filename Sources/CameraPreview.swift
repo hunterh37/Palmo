@@ -44,6 +44,12 @@ struct CameraPreview: NSViewRepresentable {
         override func layout() {
             super.layout()
             previewLayer.frame = bounds
+            // Re-apply the mirror on every layout pass. The transform set during
+            // updateNSView can be applied before the preview layer/connection is
+            // ready (see note above) and get lost; layout runs once the view has
+            // real bounds and after the session comes up, keeping the visual flip
+            // in sync with the pipeline's coordinate flip at launch.
+            applyMirror()
         }
     }
 }
