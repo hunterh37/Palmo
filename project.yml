@@ -1,0 +1,29 @@
+name: HandOrbMenu
+options:
+  bundleIdPrefix: com.dicyanin.handorbmenu
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+
+targets:
+  HandOrbMenu:
+    type: application
+    platform: macOS
+    sources:
+      - Sources
+    info:
+      path: Generated/Info.plist
+      properties:
+        CFBundleDisplayName: Hand Orb Menu
+        LSMinimumSystemVersion: "13.0"
+        NSCameraUsageDescription: >-
+          Hand Orb Menu uses the camera to detect your hand. Hold your palm up
+          to summon an orb menu and pinch an orb to open an app.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dicyanin.handorbmenu
+        GENERATE_INFOPLIST_FILE: NO
+        SWIFT_VERSION: "5.9"
+        CODE_SIGNING_ALLOWED: YES
+        CODE_SIGN_IDENTITY: "-"
+        ENABLE_HARDENED_RUNTIME: YES

@@ -1,0 +1,336 @@
+import AppKit
+import CoreGraphics
+import QuartzCore
+
+/// One launchable app on the orb menu.
+struct MenuAction: Identifiable {
+    let id: String
+    let name: String
+    let bundleID: String
+    /// Orb tint, 0...1 RGB.
+    let color: (r: CGFloat, g: CGFloat, b: CGFloat)
+
+    var appURL: URL? {
+        NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
+    }
+
+    var icon: NSImage? {
+        guard let url = appURL else { return nil }
+        return NSWorkspace.shared.icon(forFile: url.path)
+    }
+
+    func launch() {
+        guard let url = appURL else { return }
+        NSWorkspace.shared.openApplication(at: url,
+                                           configuration: NSWorkspace.OpenConfiguration(),
+                                           completionHandler: nil)
+    }
+
+    /// Default ring of built-in apps; entries not installed are dropped.
+    static var defaults: [MenuAction] {
+        [
+            MenuAction(id: "safari", name: "Safari", bundleID: "com.apple.Safari",
+                       color: (0.20, 0.55, 1.00)),
+            MenuAction(id: "mail", name: "Mail", bundleID: "com.apple.mail",
+                       color: (0.35, 0.70, 1.00)),
+            MenuAction(id: "messages", name: "Messages", bundleID: "com.apple.MobileSMS",
+                       color: (0.25, 0.85, 0.40)),
+            MenuAction(id: "notes", name: "Notes", bundleID: "com.apple.Notes",
+                       color: (1.00, 0.80, 0.25)),
+            MenuAction(id: "calendar", name: "Calendar", bundleID: "com.apple.iCal",
+                       color: (1.00, 0.35, 0.30)),
+            MenuAction(id: "music", name: "Music", bundleID: "com.apple.Music",
+                       color: (0.95, 0.30, 0.55)),
+        ].filter { $0.appURL != nil }
+    }
+}
+
+/// One orb projected into normalized (0...1, top-left origin) video space.
+struct OrbDisplay: Identifiable {
+    let id: String
+    /// Normalized center in the video frame, top-left origin.
+    var center: CGPoint
+    /// Orb radius as a fraction of the frame height.
+    var radiusNorm: CGFloat
+    /// Pop-in scale (0 hidden, 1 settled; may overshoot slightly).
+    var scale: CGFloat
+    /// Depth offset toward the viewer, 0...1, for the 3D pop.
+    var pop: CGFloat
+    var highlighted: Bool
+    var isCommand: Bool
+    var action: MenuAction?
+}
+
+/// Menu state machine. Fed one hand per frame; publishes the orb layout in
+/// normalized video coordinates. All timing uses the caller's clock.
+final class OrbMenuEngine {
+    enum State {
+        case hidden
+        case summoning(start: CFTimeInterval)
+        case open(start: CFTimeInterval)
+        case launching(action: MenuAction, at: CGPoint, start: CFTimeInterval)
+        case closing(start: CFTimeInterval)
+    }
+
+    private(set) var state: State = .hidden
+    private(set) var orbs: [OrbDisplay] = []
+    /// Set for one frame when an action fires.
+    private(set) var firedAction: MenuAction?
+    /// 0...1 progress toward the fist-hold dismissal while the menu is open.
+    private(set) var dismissProgress: CGFloat = 0
+
+    let actions = MenuAction.defaults
+
+    /// Immediately hide the menu and clear transient gesture state (used when
+    /// another interaction mode takes over the hand).
+    func reset() {
+        state = .hidden
+        orbs = []
+        firedAction = nil
+        dismissProgress = 0
+        openPalmSince = nil
+        fistSince = nil
+        lastPinch = false
+    }
+
+    // Layout tuning (aspect-corrected units: fractions of frame height).
+    private let commandRadius: CGFloat = 0.045
+    private let orbRadius: CGFloat = 0.058
+    private let fanRadius: CGFloat = 0.24
+    private let hoverAbovePalm: CGFloat = 0.20
+    private let summonDuration: CFTimeInterval = 0.75
+    private let fanStagger: CFTimeInterval = 0.06
+    private let fanDuration: CFTimeInterval = 0.35
+    /// How long a fist must be held to dismiss the open menu.
+    private let fistHold: CFTimeInterval = 1.0
+
+    // Gesture stability.
+    private var openPalmSince: CFTimeInterval?
+    private var fistSince: CFTimeInterval?
+    private var lastHandSeen: CFTimeInterval = 0
+    private var lastPinch = false
+
+    /// Smoothed anchor (palm center) in aspect-corrected space.
+    private var anchor: CGPoint = .zero
+    private var aspect: CGFloat = 16.0 / 9.0
+
+    /// Advance the state machine. `hand` is the menu-driving hand (or nil),
+    /// `videoSize` the camera frame pixels, `now` the frame clock.
+    func update(hand: DetectedHand?, videoSize: CGSize, now: CFTimeInterval) {
+        firedAction = nil
+        aspect = videoSize.height > 0 ? videoSize.width / videoSize.height : 16.0 / 9.0
+        if hand != nil { lastHandSeen = now }
+
+        trackGestures(hand: hand, now: now)
+        // The menu anchors to the palm only until it settles open. Once open
+        // it stays put so the hand is free to travel and pinch orbs.
+        if case .hidden = state { followPalm(hand: hand) }
+
+        dismissProgress = 0
+        switch state {
+        case .hidden:
+            if let since = openPalmSince, now - since > 0.45, hand?.palmCenter != nil {
+                snapAnchor(to: hand)
+                state = .summoning(start: now)
+            }
+        case .summoning(let start):
+            if now - start >= summonDuration { state = .open(start: now) }
+        case .open:
+            handleSelection(hand: hand, now: now)
+            if let since = fistSince {
+                dismissProgress = min(CGFloat((now - since) / fistHold), 1)
+                if dismissProgress >= 1 {
+                    dismissProgress = 0
+                    state = .closing(start: now)
+                }
+            }
+        case .launching(let action, _, let start):
+            _ = action
+            if now - start > 0.55 { state = .hidden }
+        case .closing(let start):
+            if now - start > 0.25 { state = .hidden }
+        }
+
+        orbs = layout(now: now)
+        lastPinch = hand?.isPinching ?? lastPinch
+    }
+
+    // MARK: - Gestures
+
+    private func trackGestures(hand: DetectedHand?, now: CFTimeInterval) {
+        if let hand, hand.isOpenPalmUp {
+            if openPalmSince == nil { openPalmSince = now }
+        } else {
+            openPalmSince = nil
+        }
+        if let hand, hand.isFist {
+            if fistSince == nil { fistSince = now }
+        } else {
+            fistSince = nil
+        }
+    }
+
+
+    // MARK: - Anchor
+
+    /// Convert a normalized point into aspect-corrected space where distances
+    /// are isotropic (x scaled by the frame aspect).
+    private func corrected(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x * aspect, y: p.y) }
+    private func normalized(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x / aspect, y: p.y) }
+
+    private func snapAnchor(to hand: DetectedHand?) {
+        if let c = hand?.palmCenter { anchor = corrected(c) }
+    }
+
+    private func followPalm(hand: DetectedHand?) {
+        guard let c = hand?.palmCenter else { return }
+        let target = corrected(c)
+        // Critically damped-ish lerp keeps the menu glued but calm.
+        anchor.x += (target.x - anchor.x) * 0.14
+        anchor.y += (target.y - anchor.y) * 0.14
+    }
+
+    // MARK: - Selection
+
+    private func handleSelection(hand: DetectedHand?, now: CFTimeInterval) {
+        guard let hand else { return }
+        let pinchStarted = hand.isPinching && !lastPinch
+        guard pinchStarted, let point = hand.pinchPoint ?? hand.indexTip else { return }
+        let p = corrected(point)
+        for orb in fanCenters(progress: 1) {
+            let d = hypot(p.x - orb.center.x, p.y - orb.center.y)
+            if d < orbRadius * 1.35, let action = orb.action {
+                firedAction = action
+                action.launch()
+                state = .launching(action: action, at: orb.center, start: now)
+                return
+            }
+        }
+    }
+
+    /// Hover target for highlight rings while the menu is open.
+    private func hoverPoint(hand: DetectedHand?) -> CGPoint? {
+        guard let p = hand?.indexTip else { return nil }
+        return corrected(p)
+    }
+
+    // MARK: - Layout
+
+    private struct FanOrb {
+        var center: CGPoint // aspect-corrected
+        var action: MenuAction?
+    }
+
+    private var commandCenterTarget: CGPoint {
+        CGPoint(x: anchor.x, y: anchor.y - hoverAbovePalm)
+    }
+
+    private func fanCenters(progress: CGFloat) -> [OrbDisplay] {
+        let cc = commandCenterTarget
+        let n = actions.count
+        guard n > 0 else { return [] }
+        let startAngle = -160.0 * CGFloat.pi / 180
+        let endAngle = -20.0 * CGFloat.pi / 180
+        var out: [OrbDisplay] = []
+        for (i, action) in actions.enumerated() {
+            let t = n == 1 ? 0.5 : CGFloat(i) / CGFloat(n - 1)
+            let angle = startAngle + (endAngle - startAngle) * t
+            let r = fanRadius * progress
+            let center = CGPoint(x: cc.x + cos(angle) * r, y: cc.y + sin(angle) * r)
+            out.append(OrbDisplay(id: action.id,
+                                  center: normalized(center),
+                                  radiusNorm: orbRadius,
+                                  scale: 1, pop: 1,
+                                  highlighted: false,
+                                  isCommand: false,
+                                  action: action))
+        }
+        return out
+    }
+
+    private func easeOutBack(_ t: CGFloat) -> CGFloat {
+        let c: CGFloat = 1.70158
+        let x = t - 1
+        return 1 + (c + 1) * x * x * x + c * x * x
+    }
+
+    private func easeOutCubic(_ t: CGFloat) -> CGFloat {
+        let x = 1 - t
+        return 1 - x * x * x
+    }
+
+    private func layout(now: CFTimeInterval) -> [OrbDisplay] {
+        switch state {
+        case .hidden:
+            return []
+        case .summoning(let start):
+            let t = min(CGFloat((now - start) / summonDuration), 1)
+            let p = easeOutCubic(t)
+            let cc = commandCenterTarget
+            // Descend from above the top edge of the frame.
+            let y = (-0.12) + (cc.y + 0.12) * p
+            return [OrbDisplay(id: "command",
+                               center: normalized(CGPoint(x: cc.x, y: y)),
+                               radiusNorm: commandRadius,
+                               scale: 0.6 + 0.4 * p,
+                               pop: p,
+                               highlighted: false,
+                               isCommand: true,
+                               action: nil)]
+        case .open(let start):
+            var out = [OrbDisplay(id: "command",
+                                  center: normalized(commandCenterTarget),
+                                  radiusNorm: commandRadius,
+                                  scale: 1, pop: 1,
+                                  highlighted: false,
+                                  isCommand: true,
+                                  action: nil)]
+            let hover = pendingHover
+            for (i, var orb) in fanCenters(progress: 1).enumerated() {
+                let delay = fanStagger * CFTimeInterval(i)
+                let t = min(max(CGFloat((now - start - delay) / fanDuration), 0), 1)
+                let s = easeOutBack(t)
+                // Fan the orb out along its own ray.
+                let target = corrected(orb.center)
+                let cc = commandCenterTarget
+                let c = CGPoint(x: cc.x + (target.x - cc.x) * min(s, 1.0),
+                                y: cc.y + (target.y - cc.y) * min(s, 1.0))
+                orb.center = normalized(c)
+                orb.scale = s
+                orb.pop = t
+                if let h = hover {
+                    let d = hypot(h.x - target.x, h.y - target.y)
+                    orb.highlighted = d < orbRadius * 1.35
+                }
+                out.append(orb)
+            }
+            return out
+        case .launching(let action, let at, let start):
+            let t = min(CGFloat((now - start) / 0.55), 1)
+            return [OrbDisplay(id: action.id,
+                               center: normalized(at),
+                               radiusNorm: orbRadius,
+                               scale: 1 + 0.7 * t,
+                               pop: 1,
+                               highlighted: true,
+                               isCommand: false,
+                               action: action)]
+        case .closing(let start):
+            let t = min(CGFloat((now - start) / 0.25), 1)
+            var out = fanCenters(progress: 1 - easeOutCubic(t))
+            for i in out.indices { out[i].scale = 1 - t; out[i].pop = 1 - t }
+            out.append(OrbDisplay(id: "command",
+                                  center: normalized(commandCenterTarget),
+                                  radiusNorm: commandRadius,
+                                  scale: 1 - t, pop: 1 - t,
+                                  highlighted: false,
+                                  isCommand: true,
+                                  action: nil))
+            return out
+        }
+    }
+
+    /// Hover point captured before layout, set from update()'s hand.
+    private var pendingHover: CGPoint?
+    func setHover(from hand: DetectedHand?) { pendingHover = hoverPoint(hand: hand) }
+}

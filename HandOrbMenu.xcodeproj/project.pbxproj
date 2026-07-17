@@ -1,0 +1,324 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0679EA92E5445E9DD2E82DDA /* OrbSceneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 852497A9FD56E812D22BA539 /* OrbSceneView.swift */; };
+		3420205770E024161C305D17 /* HandOrbMenuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E150B563944B2A958EEC7328 /* HandOrbMenuApp.swift */; };
+		5A2B604BFFD5791AF15E0876 /* CameraPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBAFAF276195BB144030116E /* CameraPreview.swift */; };
+		63B31BA2A6A7FC44AC6B12DA /* HandVisionPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C0D434D30EC1C13EC1EA86 /* HandVisionPipeline.swift */; };
+		9632A5923B7A84D061F85436 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16AF9509850A95E201E331E7 /* MenuBarView.swift */; };
+		A239BA5EEE0A151DB2029241 /* OrbMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9809169F369D55D903E7DA2B /* OrbMenu.swift */; };
+		B6B8D96FC6547DA6F9548884 /* HandMenuModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 286965547D3BDD08BDDEC4C0 /* HandMenuModel.swift */; };
+		BEDB0C179472ECAE01950E64 /* CollapseWindowStyler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE728A3DE1B49C5AF7AA562 /* CollapseWindowStyler.swift */; };
+		E79C3F6B7AE00F1FEF46E607 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F8EDE33192412549ECDF95 /* ContentView.swift */; };
+		F708FD64549F5E26E74DA0F6 /* MouseControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 950D4B1A188FDDD05BA8723C /* MouseControl.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		10F8EDE33192412549ECDF95 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		16AF9509850A95E201E331E7 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		286965547D3BDD08BDDEC4C0 /* HandMenuModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandMenuModel.swift; sourceTree = "<group>"; };
+		2FE728A3DE1B49C5AF7AA562 /* CollapseWindowStyler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollapseWindowStyler.swift; sourceTree = "<group>"; };
+		852497A9FD56E812D22BA539 /* OrbSceneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbSceneView.swift; sourceTree = "<group>"; };
+		92C0D434D30EC1C13EC1EA86 /* HandVisionPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandVisionPipeline.swift; sourceTree = "<group>"; };
+		950D4B1A188FDDD05BA8723C /* MouseControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseControl.swift; sourceTree = "<group>"; };
+		9809169F369D55D903E7DA2B /* OrbMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbMenu.swift; sourceTree = "<group>"; };
+		CBAFAF276195BB144030116E /* CameraPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreview.swift; sourceTree = "<group>"; };
+		E150B563944B2A958EEC7328 /* HandOrbMenuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandOrbMenuApp.swift; sourceTree = "<group>"; };
+		FC2866BC3436DF38816FA68F /* HandOrbMenu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HandOrbMenu.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		4FAE7D533B15340C21A3D52A /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				CBAFAF276195BB144030116E /* CameraPreview.swift */,
+				2FE728A3DE1B49C5AF7AA562 /* CollapseWindowStyler.swift */,
+				10F8EDE33192412549ECDF95 /* ContentView.swift */,
+				286965547D3BDD08BDDEC4C0 /* HandMenuModel.swift */,
+				E150B563944B2A958EEC7328 /* HandOrbMenuApp.swift */,
+				92C0D434D30EC1C13EC1EA86 /* HandVisionPipeline.swift */,
+				16AF9509850A95E201E331E7 /* MenuBarView.swift */,
+				950D4B1A188FDDD05BA8723C /* MouseControl.swift */,
+				9809169F369D55D903E7DA2B /* OrbMenu.swift */,
+				852497A9FD56E812D22BA539 /* OrbSceneView.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		5B2C77A175DB745D06821150 = {
+			isa = PBXGroup;
+			children = (
+				4FAE7D533B15340C21A3D52A /* Sources */,
+				9FB2440DFB22D29FCBAE9D69 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9FB2440DFB22D29FCBAE9D69 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FC2866BC3436DF38816FA68F /* HandOrbMenu.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		76340FBA5EC88A3E1EA71ED4 /* HandOrbMenu */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2C5FE963C3B442EB7B030F0E /* Build configuration list for PBXNativeTarget "HandOrbMenu" */;
+			buildPhases = (
+				93AE36A4809F9E09049045E7 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HandOrbMenu;
+			packageProductDependencies = (
+			);
+			productName = HandOrbMenu;
+			productReference = FC2866BC3436DF38816FA68F /* HandOrbMenu.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		468F8B43C88F6C9322A33162 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = 78DF3943CEF6A8462C9F41C5 /* Build configuration list for PBXProject "HandOrbMenu" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 5B2C77A175DB745D06821150;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 9FB2440DFB22D29FCBAE9D69 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				76340FBA5EC88A3E1EA71ED4 /* HandOrbMenu */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		93AE36A4809F9E09049045E7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5A2B604BFFD5791AF15E0876 /* CameraPreview.swift in Sources */,
+				BEDB0C179472ECAE01950E64 /* CollapseWindowStyler.swift in Sources */,
+				E79C3F6B7AE00F1FEF46E607 /* ContentView.swift in Sources */,
+				B6B8D96FC6547DA6F9548884 /* HandMenuModel.swift in Sources */,
+				3420205770E024161C305D17 /* HandOrbMenuApp.swift in Sources */,
+				63B31BA2A6A7FC44AC6B12DA /* HandVisionPipeline.swift in Sources */,
+				9632A5923B7A84D061F85436 /* MenuBarView.swift in Sources */,
+				F708FD64549F5E26E74DA0F6 /* MouseControl.swift in Sources */,
+				A239BA5EEE0A151DB2029241 /* OrbMenu.swift in Sources */,
+				0679EA92E5445E9DD2E82DDA /* OrbSceneView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		198CF860FD0027362CF57281 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Generated/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dicyanin.handorbmenu;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		24773B36060468E1C36DFC39 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		41294AF9E9F234964DA28EEC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		79A77D86C24FC6C04C93718A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Generated/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dicyanin.handorbmenu;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2C5FE963C3B442EB7B030F0E /* Build configuration list for PBXNativeTarget "HandOrbMenu" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				198CF860FD0027362CF57281 /* Debug */,
+				79A77D86C24FC6C04C93718A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		78DF3943CEF6A8462C9F41C5 /* Build configuration list for PBXProject "HandOrbMenu" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				24773B36060468E1C36DFC39 /* Debug */,
+				41294AF9E9F234964DA28EEC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 468F8B43C88F6C9322A33162 /* Project object */;
+}
