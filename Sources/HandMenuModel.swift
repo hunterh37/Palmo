@@ -46,6 +46,13 @@ final class HandMenuModel: ObservableObject {
 
     @Published var mouseControlTrusted: Bool = true
 
+    /// Claude Code session orbs shown in collapsed mode.
+    @Published var claudeOrbs: [ClaudeOrbDisplay] = []
+    /// 0...1 fill of the fist-hold ring that raises/lowers the Claude orbs.
+    @Published var claudeFistProgress: CGFloat = 0
+    /// Live Claude Code sessions (hook-fed).
+    let claudeSessions = ClaudeSessionStore()
+
     let session = AVCaptureSession()
     /// The buddy assistant (chat) engine, shared with the chat window.
     let assistant = AssistantEngine()
@@ -61,6 +68,7 @@ final class HandMenuModel: ObservableObject {
     private let engine = OrbMenuEngine()
     private let mouseEngine = MouseControlEngine()
     private let commands = GestureCommandEngine()
+    private let claudeEngine = ClaudeOrbEngine()
     private let voice = VoiceReactor()
     private var commandToastTask: Task<Void, Never>?
     private var lastFrameAt: CFTimeInterval = 0
@@ -112,6 +120,7 @@ final class HandMenuModel: ObservableObject {
         pipeline.onFrame = { [weak self] hands, frameSize in
             Task { @MainActor in self?.publish(hands, frameSize: frameSize) }
         }
+        claudeSessions.start()
         await configureCamera()
         startFPSTimer()
     }
@@ -172,6 +181,37 @@ final class HandMenuModel: ObservableObject {
             ?? hands.first(where: { $0.palmCenter != nil })
             ?? hands.first
         let now = CACurrentMediaTime()
+
+        // Claude session orbs live in collapsed mode; the fist gesture is
+        // theirs there (mouse mode keeps the fist for scrolling).
+        if collapsed && !mouseModeEnabled {
+            claudeEngine.update(sessions: claudeSessions.sessions, hand: hand,
+                                videoSize: frameSize, now: now)
+            claudeOrbs = claudeEngine.orbs
+            claudeFistProgress = claudeEngine.fistProgress
+            if let sid = claudeEngine.selectedSessionID,
+               let session = claudeSessions.sessions.first(where: { $0.id == sid }) {
+                claudeSessions.acknowledge(sid)
+                commandToast = "🤖 \(session.name) checked"
+                voice.say("\(session.name) done")
+                commandToastTask?.cancel()
+                commandToastTask = Task {
+                    try? await Task.sleep(nanoseconds: 1_800_000_000)
+                    if !Task.isCancelled { self.commandToast = nil }
+                }
+            }
+            statusText = claudeStatus()
+            orbs = []
+            dismissProgress = 0
+            mouseOrb = nil
+            return
+        }
+        if !claudeOrbs.isEmpty || claudeFistProgress > 0 {
+            claudeEngine.reset()
+            claudeOrbs = []
+            claudeFistProgress = 0
+        }
+
         if mouseModeEnabled {
             // Mouse mode replaces the orb menu entirely.
             mouseEngine.update(hand: hand, videoSize: frameSize, now: now)
@@ -199,6 +239,21 @@ final class HandMenuModel: ObservableObject {
             }
         }
         statusText = status(for: engine.state, hand: hand)
+    }
+
+    private func claudeStatus() -> String {
+        let sessions = claudeSessions.sessions
+        if sessions.isEmpty { return "No Claude sessions" }
+        let done = sessions.filter(\.isDone).count
+        if claudeOrbs.contains(where: { $0.selectProgress > 0.02 }) {
+            return "Hold your finger on an orb to select it"
+        }
+        if claudeOrbs.first.map({ $0.center.y < 0.5 }) == true {
+            return "Point at a session orb to check it off"
+        }
+        return done > 0
+            ? "\(done) Claude session\(done == 1 ? "" : "s") done — hold a fist to review"
+            : "\(sessions.count) Claude session\(sessions.count == 1 ? "" : "s") working"
     }
 
     private func mouseStatus(hand: DetectedHand?) -> String {

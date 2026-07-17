@@ -8,6 +8,11 @@ struct ContentView: View {
     /// 0→1 dream fade-in progress when entering collapsed mode.
     @State private var dreamReveal: CGFloat = 0
 
+    /// True while any tracked hand shows an open raised palm.
+    private var handRaised: Bool {
+        model.hands.contains { $0.isOpenPalmUp }
+    }
+
     var body: some View {
         Group {
             if model.collapsed {
@@ -30,78 +35,89 @@ struct ContentView: View {
     // MARK: - Dashboard (the useful main window)
 
     private var dashboard: some View {
-        HStack(spacing: 20) {
+        HStack(spacing: 24) {
             leftColumn
-                .frame(width: 320)
+                .frame(width: 300)
             rightColumn
         }
-        .padding(20)
+        .padding(24)
         .frame(minWidth: 900, minHeight: 600)
-        .background(
-            LinearGradient(colors: [Color(nsColor: .windowBackgroundColor),
-                                    Brand.accent.opacity(0.10),
-                                    Brand.accentSecondary.opacity(0.12)],
-                           startPoint: .top, endPoint: .bottomTrailing))
+        .background(LiquidGlassBackground())
     }
 
     private var leftColumn: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             // Hero
             HStack(alignment: .center, spacing: 14) {
-                BuddyView(mood: model.buddyMood, gaze: model.buddyGaze)
+                PalmoAvatarView(mood: model.buddyMood, gaze: model.buddyGaze,
+                                waving: handRaised)
                     .frame(width: 84, height: 84)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(Brand.name.uppercased())
-                        .font(.system(size: 40, weight: .black, design: .rounded))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(Brand.name)
+                        .font(.system(size: 26, weight: .semibold, design: .rounded))
                         .foregroundStyle(Brand.gradient)
                     Text(model.statusText)
-                        .font(.system(.callout, design: .rounded).weight(.bold))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
             }
+            .padding(.bottom, 6)
 
-            // Kill switch
-            card {
-                Toggle(isOn: $settings.trackingPaused.inverted) {
-                    Label {
-                        Text(settings.trackingPaused ? "TRACKING PAUSED" : "TRACKING ON")
-                            .font(.system(.headline, design: .rounded).weight(.black))
-                    } icon: {
-                        Image(systemName: settings.trackingPaused
-                              ? "eye.slash.fill" : "eye.fill")
-                            .foregroundStyle(settings.trackingPaused ? .red : .green)
-                    }
-                }
-                .toggleStyle(.switch)
-                .tint(.green)
+            // Tracking kill switch
+            HStack(spacing: 12) {
+                Image(systemName: settings.trackingPaused ? "eye.slash" : "eye")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(settings.trackingPaused ? .secondary : Brand.accent)
+                    .frame(width: 20)
+                    .contentTransition(.symbolEffect(.replace))
+                Text("Tracking").font(.callout)
+                Spacer()
+                Circle()
+                    .fill(settings.trackingPaused ? Color.secondary.opacity(0.4) : .green)
+                    .frame(width: 6, height: 6)
+                    .shadow(color: settings.trackingPaused ? .clear : .green.opacity(0.8),
+                            radius: 4)
+                Toggle("", isOn: $settings.trackingPaused.inverted)
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .labelsHidden()
+                    .tint(Brand.accent)
             }
+            .glassCard(padding: 14)
 
             // Focus timer
-            card {
-                VStack(alignment: .leading, spacing: 8) {
-                    Label("FOCUS WITH \(Brand.name.uppercased())",
-                          systemImage: "timer")
-                        .font(.system(.subheadline, design: .rounded).weight(.black))
-                        .foregroundStyle(.secondary)
-                    HStack {
-                        Text(model.focus.running ? model.focus.display : "25:00")
-                            .font(.system(size: 44, weight: .black, design: .rounded))
-                            .monospacedDigit()
-                            .contentTransition(.numericText())
-                        Spacer()
-                        Button {
-                            model.focus.running ? model.focus.stop() : model.focus.start()
-                        } label: {
-                            Text(model.focus.running ? "STOP" : "START")
-                                .font(.system(.headline, design: .rounded).weight(.black))
-                                .padding(.horizontal, 6)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(model.focus.running ? .red : Brand.accent)
-                    }
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Focus").microLabel()
+                    Text(model.focus.running ? model.focus.display : "25:00")
+                        .font(.system(size: 36, weight: .light, design: .rounded))
+                        .monospacedDigit()
+                        .contentTransition(.numericText())
+                        .foregroundStyle(model.focus.running ? .primary : .secondary)
                 }
+                Spacer()
+                Button {
+                    model.focus.running ? model.focus.stop() : model.focus.start()
+                } label: {
+                    Image(systemName: model.focus.running ? "stop.fill" : "play.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(model.focus.running ? Color.primary : .white)
+                        .frame(width: 36, height: 36)
+                        .background {
+                            if model.focus.running {
+                                Circle().fill(.ultraThinMaterial)
+                                    .overlay(Circle().strokeBorder(
+                                        .white.opacity(0.15), lineWidth: 1))
+                            } else {
+                                Circle().fill(Brand.gradient)
+                            }
+                        }
+                }
+                .buttonStyle(.plain)
+                .help(model.focus.running ? "Stop focus session" : "Start focus session")
             }
+            .glassCard(padding: 14)
             .animation(.default, value: model.focus.remaining)
 
             // Chat launcher
@@ -109,19 +125,24 @@ struct ContentView: View {
                 openWindow(id: "assistant-chat")
                 NSApp.activate(ignoringOtherApps: true)
             } label: {
-                HStack {
-                    Image(systemName: "bubble.left.and.bubble.right.fill")
-                    Text("CHAT WITH \(Brand.name.uppercased())")
-                        .font(.system(.title3, design: .rounded).weight(.black))
+                HStack(spacing: 12) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 30, height: 30)
+                        .background(Brand.gradient, in: Circle())
+                    Text("Chat").font(.callout)
                     Spacer()
-                    Text("ON-DEVICE AI")
-                        .font(.system(.caption2, design: .rounded).weight(.black))
-                        .padding(.horizontal, 8).padding(.vertical, 4)
-                        .background(.white.opacity(0.25), in: Capsule())
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.tertiary)
+                        .help("On-device AI — private, offline")
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.tertiary)
                 }
-                .padding(16)
-                .foregroundStyle(.white)
-                .background(Brand.gradient, in: RoundedRectangle(cornerRadius: 18))
+                .glassCard(padding: 12)
+                .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             }
             .buttonStyle(.plain)
 
@@ -131,45 +152,44 @@ struct ContentView: View {
     }
 
     private var gestureCheatSheet: some View {
-        card {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("AIR GESTURES")
-                    .font(.system(.subheadline, design: .rounded).weight(.black))
-                    .foregroundStyle(.secondary)
-                cheatRow("🖐️", "Open palm", "App orbs")
-                cheatRow("🤏", "Pinch", "Click / launch")
-                cheatRow("✊", "Fist + move", "Scroll")
-                cheatRow("✌️", "Peace", settings.peaceCommand.label)
-                cheatRow("👍", "Thumbs up", settings.thumbsUpCommand.label)
-            }
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Gestures").microLabel()
+            cheatRow("🖐️", "App orbs")
+            cheatRow("🤏", "Click / launch")
+            cheatRow("✊", "Scroll")
+            cheatRow("✌️", settings.peaceCommand.label)
+            cheatRow("👍", settings.thumbsUpCommand.label)
         }
+        .glassCard(padding: 14)
     }
 
-    private func cheatRow(_ emoji: String, _ g: String, _ a: String) -> some View {
-        HStack {
-            Text(emoji).font(.title3)
-            Text(g).font(.system(.body, design: .rounded).weight(.bold))
+    private func cheatRow(_ glyph: String, _ action: String) -> some View {
+        HStack(spacing: 12) {
+            Text(glyph)
+                .font(.system(size: 15))
+                .grayscale(0.4)
+                .frame(width: 22)
+            Text(action)
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
             Spacer()
-            Text(a.uppercased())
-                .font(.system(.caption, design: .rounded).weight(.black))
-                .foregroundStyle(Brand.accent)
         }
     }
 
     private var rightColumn: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
             cameraCard
             statsRow
         }
     }
 
     private var statsRow: some View {
-        HStack(spacing: 12) {
-            statCard("🔥", "\(stats.streakDays)", "DAY STREAK")
-            statCard("🚀", "\(stats.appLaunches)", "APPS LAUNCHED")
-            statCard("🎯", "\(stats.clicks)", "AIR CLICKS")
-            statCard("📸", "\(stats.screenshots)", "AIR SHOTS")
-            statCard("⏱️", handTime, "HANDS-FREE")
+        HStack(spacing: 10) {
+            statCard("flame", "\(stats.streakDays)", "streak")
+            statCard("arrow.up.forward.app", "\(stats.appLaunches)", "launches")
+            statCard("hand.tap", "\(stats.clicks)", "clicks")
+            statCard("camera.viewfinder", "\(stats.screenshots)", "shots")
+            statCard("clock", handTime, "hands-free")
         }
     }
 
@@ -178,32 +198,33 @@ struct ContentView: View {
         return m >= 60 ? "\(m / 60)h \(m % 60)m" : "\(m)m"
     }
 
-    private func statCard(_ emoji: String, _ value: String, _ label: String) -> some View {
-        VStack(spacing: 4) {
-            Text(emoji).font(.title2)
+    private func statCard(_ icon: String, _ value: String, _ label: String) -> some View {
+        VStack(spacing: 5) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.tertiary)
             Text(value)
-                .font(.system(.title, design: .rounded).weight(.black))
+                .font(.system(size: 19, weight: .medium, design: .rounded))
+                .monospacedDigit()
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
-            Text(label)
-                .font(.system(size: 10, weight: .black, design: .rounded))
-                .foregroundStyle(.secondary)
+            Text(label).microLabel()
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 14)
-        .background(.thickMaterial, in: RoundedRectangle(cornerRadius: 18))
+        .glassCard(padding: 12)
+        .help(label.capitalized)
     }
 
     private var cameraCard: some View {
         GeometryReader { geo in
             ZStack {
                 if settings.trackingPaused {
-                    VStack(spacing: 10) {
+                    VStack(spacing: 12) {
                         BuddyView(mood: .idle).frame(width: 90, height: 90)
                             .saturation(0)
-                        Text("NAPPING")
-                            .font(.system(.title, design: .rounded).weight(.black))
-                            .foregroundStyle(.secondary)
+                        Image(systemName: "moon.zzz.fill")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.4))
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color.black.opacity(0.85))
@@ -246,17 +267,17 @@ struct ContentView: View {
                 .animation(.spring(duration: 0.3), value: model.commandToast)
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22)
-            .strokeBorder(.white.opacity(0.12), lineWidth: 1))
-        .shadow(color: .black.opacity(0.25), radius: 18, y: 8)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous)
+            .strokeBorder(.white.opacity(0.08), lineWidth: 1))
+        .shadow(color: .black.opacity(0.18), radius: 20, y: 8)
     }
 
     private func commandToastView(_ text: String) -> some View {
-        Text(text.uppercased())
-            .font(.system(.title3, design: .rounded).weight(.black))
-            .padding(.horizontal, 20).padding(.vertical, 10)
-            .background(Brand.gradient, in: Capsule())
+        Text(text)
+            .font(.system(size: 13, weight: .medium, design: .rounded))
+            .padding(.horizontal, 16).padding(.vertical, 8)
+            .glassEffect(.regular, in: Capsule())
             .foregroundStyle(.white)
             .padding(.top, 14)
     }
@@ -264,50 +285,63 @@ struct ContentView: View {
     private func holdHUD(_ label: String) -> some View {
         HStack(spacing: 10) {
             ZStack {
-                Circle().stroke(.white.opacity(0.25), lineWidth: 4)
+                Circle().stroke(.white.opacity(0.2), lineWidth: 3)
                 Circle().trim(from: 0, to: model.commandHoldProgress)
-                    .stroke(Brand.accent, style: .init(lineWidth: 4, lineCap: .round))
+                    .stroke(Brand.accent, style: .init(lineWidth: 3, lineCap: .round))
                     .rotationEffect(.degrees(-90))
             }
-            .frame(width: 26, height: 26)
-            Text(label.uppercased())
-                .font(.system(.headline, design: .rounded).weight(.black))
+            .frame(width: 22, height: 22)
+            Text(label)
+                .font(.system(size: 12, weight: .medium, design: .rounded))
                 .foregroundStyle(.white)
         }
-        .padding(.horizontal, 16).padding(.vertical, 8)
-        .background(.black.opacity(0.55), in: Capsule())
+        .padding(.horizontal, 14).padding(.vertical, 8)
+        .glassEffect(.regular, in: Capsule())
         .padding(.bottom, 10)
     }
 
     private var quickToggles: some View {
-        HStack(spacing: 14) {
-            Toggle("MOUSE", isOn: $model.mouseModeEnabled)
+        HStack(spacing: 6) {
+            iconToggle("cursorarrow", $model.mouseModeEnabled, "Mouse mode")
             if model.mouseModeEnabled {
-                Toggle("INVERT X", isOn: $model.mouseInvertX)
+                iconToggle("arrow.left.arrow.right", $model.mouseInvertX, "Invert X")
             }
-            Toggle("MIRROR", isOn: $model.mirrored)
-            Toggle("COLLAPSE", isOn: $model.collapsed)
+            iconToggle("arrow.trianglehead.2.clockwise.rotate.90", $model.mirrored, "Mirror")
+            iconToggle("rectangle.compress.vertical", $model.collapsed, "Collapse")
             Spacer()
-            Text("\(model.fps) FPS")
-                .foregroundStyle(.secondary)
+            Text("\(model.fps)")
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.45))
+                .help("Frames per second")
             ForEach(model.hands) { hand in
-                Text(hand.isLeft ? "L" : "R")
-                    .foregroundStyle(hand.isPinching ? .yellow : (hand.isLeft ? .blue : .orange))
+                Circle()
+                    .fill(hand.isPinching ? .yellow : (hand.isLeft ? .blue : .orange))
+                    .frame(width: 6, height: 6)
+                    .help(hand.isLeft ? "Left hand" : "Right hand")
             }
         }
-        .font(.system(.caption, design: .rounded).weight(.black))
-        .toggleStyle(.switch)
-        .controlSize(.mini)
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(.ultraThinMaterial)
+        .animation(.spring(duration: 0.25), value: model.mouseModeEnabled)
     }
 
-    private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        content()
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.thickMaterial, in: RoundedRectangle(cornerRadius: 18))
+    private func iconToggle(_ icon: String, _ binding: Binding<Bool>,
+                            _ help: String) -> some View {
+        Button {
+            binding.wrappedValue.toggle()
+        } label: {
+            Image(systemName: icon)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(binding.wrappedValue ? .white : .white.opacity(0.45))
+                .frame(width: 28, height: 24)
+                .background(
+                    binding.wrappedValue ? AnyShapeStyle(Brand.accent.opacity(0.85))
+                                         : AnyShapeStyle(Color.white.opacity(0.08)),
+                    in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .help(help)
     }
 
     // MARK: - Collapsed overlay mode (unchanged behavior)
@@ -319,13 +353,34 @@ struct ContentView: View {
                     CameraPreview(session: model.session, mirrored: model.mirrored)
                     HandOverlay(hands: model.hands, size: geo.size,
                                 videoSize: model.videoSize)
+                    ClaudeOrbOverlay(orbs: model.claudeOrbs,
+                                     fistProgress: model.claudeFistProgress,
+                                     size: geo.size, videoSize: model.videoSize)
                 } else {
                     cameraDeniedNotice
                 }
                 VStack {
+                    if let toast = model.commandToast {
+                        commandToastView(toast)
+                            .transition(.scale.combined(with: .opacity))
+                    }
                     Spacer()
                     collapsedBar
                 }
+                .animation(.spring(duration: 0.3), value: model.commandToast)
+
+                // Palmo peeks in when a hand is raised, even while collapsed.
+                PalmoAvatarView(mood: model.buddyMood, gaze: model.buddyGaze,
+                                waving: handRaised)
+                    .frame(width: 78, height: 78)
+                    .opacity(handRaised ? 1 : 0)
+                    .scaleEffect(handRaised ? 1 : 0.75, anchor: .bottomLeading)
+                    .animation(.spring(duration: 0.55, bounce: 0.35), value: handRaised)
+                    .allowsHitTesting(false)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity,
+                           alignment: .bottomLeading)
+                    .padding(.leading, 10)
+                    .padding(.bottom, 34)
             }
             .overlay { DreamGlow().opacity(Double(dreamReveal)) }
         }
@@ -357,12 +412,12 @@ struct ContentView: View {
     }
 
     private func launchToast(_ name: String) -> some View {
-        Label("Opening \(name)", systemImage: "sparkles")
-            .font(.system(.title3, design: .rounded).weight(.semibold))
-            .padding(.horizontal, 18)
-            .padding(.vertical, 10)
-            .background(.ultraThinMaterial, in: Capsule())
-            .padding(.top, 16)
+        Label(name, systemImage: "sparkles")
+            .font(.system(size: 13, weight: .medium, design: .rounded))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .glassEffect(.regular, in: Capsule())
+            .padding(.top, 14)
     }
 
     private var statusBar: some View {

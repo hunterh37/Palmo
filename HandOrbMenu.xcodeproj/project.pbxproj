@@ -9,46 +9,48 @@
 /* Begin PBXBuildFile section */
 		0679EA92E5445E9DD2E82DDA /* OrbSceneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 852497A9FD56E812D22BA539 /* OrbSceneView.swift */; };
 		3420205770E024161C305D17 /* HandOrbMenuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E150B563944B2A958EEC7328 /* HandOrbMenuApp.swift */; };
+		3AAEC0339B130BA38075246B /* ClaudeSessions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 898BA1EE937653C260057E00 /* ClaudeSessions.swift */; };
+		3AE532D1D19CA3CA22108F20 /* AssistantEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06B1252AEFF2A62517A0C261 /* AssistantEngine.swift */; };
+		57D76CC3505A635E9AB0912A /* AssistantChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE1481083683C5D3671F9C18 /* AssistantChatView.swift */; };
 		5A2B604BFFD5791AF15E0876 /* CameraPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBAFAF276195BB144030116E /* CameraPreview.swift */; };
 		63B31BA2A6A7FC44AC6B12DA /* HandVisionPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C0D434D30EC1C13EC1EA86 /* HandVisionPipeline.swift */; };
 		6A16F40CA3C0413B183D32C6 /* DreamEdge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 046C4A1F0B88EF29756891EE /* DreamEdge.swift */; };
-		77F6CBF5588449ABBE23737A /* GestureCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CD4D473DED04C638ED2558B /* GestureCommands.swift */; };
-		C38CBE1840CE40268171CFF3 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 679D48EDEAAE4115ABEB649B /* AppIcon.icns */; };
-		16C3CD85A1474060A74F0204 /* Branding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3551CC650C48446DBA9C5DD2 /* Branding.swift */; };
-		83E82B4BDC4942AEA79140AA /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2A5708230DE42E5BBE19DED /* AppSettings.swift */; };
-		BDD98553718B4133833ADAC7 /* AssistantEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 527B7466751144298BE203A1 /* AssistantEngine.swift */; };
-		7E8EE100660B4C58876E536F /* BuddyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AF13DECB3604EC499E3BF16 /* BuddyView.swift */; };
-		5B6C96A25CAA429CBD226D53 /* AssistantChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18B77A5496CF44EB96559E47 /* AssistantChatView.swift */; };
-		B83C230F4271406582AB5A82 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0443D9343614D3F9473D5B7 /* OnboardingView.swift */; };
-		2C85DF5E14EF4FCFA4B65604 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95FFFD2C19234C69AD2FB818 /* SettingsView.swift */; };
+		6CFCE33FC22370347BEF08CC /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8E8AABFC2CBFE2569618D04 /* AppSettings.swift */; };
+		6DB2A3BB33D2FBFC6DAA849B /* GestureCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EDDFBA4895D7A236C852CB2 /* GestureCommands.swift */; };
+		816DA290865E3CEAD7620337 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C21564DB49A2E73B9CBFA07 /* OnboardingView.swift */; };
+		8194914CB251D908E0808A37 /* PalmoAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0D31D7A3CE0C0589CB97BC /* PalmoAvatarView.swift */; };
+		86669DAC7B5B2157A7BE73CF /* Branding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F0A98DABCFFA6924308CEC1 /* Branding.swift */; };
 		9632A5923B7A84D061F85436 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16AF9509850A95E201E331E7 /* MenuBarView.swift */; };
 		A239BA5EEE0A151DB2029241 /* OrbMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9809169F369D55D903E7DA2B /* OrbMenu.swift */; };
 		B6B8D96FC6547DA6F9548884 /* HandMenuModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 286965547D3BDD08BDDEC4C0 /* HandMenuModel.swift */; };
+		B9AFAE715B0B27C2C371EE77 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09FD6B6226F649B9072CD88D /* SettingsView.swift */; };
 		BEDB0C179472ECAE01950E64 /* CollapseWindowStyler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE728A3DE1B49C5AF7AA562 /* CollapseWindowStyler.swift */; };
 		E79C3F6B7AE00F1FEF46E607 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F8EDE33192412549ECDF95 /* ContentView.swift */; };
+		E8B7F479600F0BA8DFA3F042 /* BuddyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00258BACB14EBAF011ADF64C /* BuddyView.swift */; };
 		F708FD64549F5E26E74DA0F6 /* MouseControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 950D4B1A188FDDD05BA8723C /* MouseControl.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		00258BACB14EBAF011ADF64C /* BuddyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuddyView.swift; sourceTree = "<group>"; };
 		046C4A1F0B88EF29756891EE /* DreamEdge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DreamEdge.swift; sourceTree = "<group>"; };
-		1CD4D473DED04C638ED2558B /* GestureCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureCommands.swift; sourceTree = "<group>"; };
-		679D48EDEAAE4115ABEB649B /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = AppIcon.icns; path = Resources/AppIcon.icns; sourceTree = SOURCE_ROOT; };
-		3551CC650C48446DBA9C5DD2 /* Branding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Branding.swift; sourceTree = "<group>"; };
-		E2A5708230DE42E5BBE19DED /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
-		527B7466751144298BE203A1 /* AssistantEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantEngine.swift; sourceTree = "<group>"; };
-		6AF13DECB3604EC499E3BF16 /* BuddyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuddyView.swift; sourceTree = "<group>"; };
-		18B77A5496CF44EB96559E47 /* AssistantChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantChatView.swift; sourceTree = "<group>"; };
-		F0443D9343614D3F9473D5B7 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
-		95FFFD2C19234C69AD2FB818 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		06B1252AEFF2A62517A0C261 /* AssistantEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantEngine.swift; sourceTree = "<group>"; };
+		09FD6B6226F649B9072CD88D /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		10F8EDE33192412549ECDF95 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		16AF9509850A95E201E331E7 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		286965547D3BDD08BDDEC4C0 /* HandMenuModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandMenuModel.swift; sourceTree = "<group>"; };
 		2FE728A3DE1B49C5AF7AA562 /* CollapseWindowStyler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollapseWindowStyler.swift; sourceTree = "<group>"; };
+		3EDDFBA4895D7A236C852CB2 /* GestureCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureCommands.swift; sourceTree = "<group>"; };
+		4C21564DB49A2E73B9CBFA07 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		6F0A98DABCFFA6924308CEC1 /* Branding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Branding.swift; sourceTree = "<group>"; };
 		852497A9FD56E812D22BA539 /* OrbSceneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbSceneView.swift; sourceTree = "<group>"; };
+		898BA1EE937653C260057E00 /* ClaudeSessions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeSessions.swift; sourceTree = "<group>"; };
 		92C0D434D30EC1C13EC1EA86 /* HandVisionPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandVisionPipeline.swift; sourceTree = "<group>"; };
 		950D4B1A188FDDD05BA8723C /* MouseControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseControl.swift; sourceTree = "<group>"; };
 		9809169F369D55D903E7DA2B /* OrbMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbMenu.swift; sourceTree = "<group>"; };
+		AC0D31D7A3CE0C0589CB97BC /* PalmoAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PalmoAvatarView.swift; sourceTree = "<group>"; };
+		B8E8AABFC2CBFE2569618D04 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		CBAFAF276195BB144030116E /* CameraPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreview.swift; sourceTree = "<group>"; };
+		DE1481083683C5D3671F9C18 /* AssistantChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantChatView.swift; sourceTree = "<group>"; };
 		E150B563944B2A958EEC7328 /* HandOrbMenuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandOrbMenuApp.swift; sourceTree = "<group>"; };
 		FC2866BC3436DF38816FA68F /* HandOrbMenu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HandOrbMenu.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -57,26 +59,27 @@
 		4FAE7D533B15340C21A3D52A /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				B8E8AABFC2CBFE2569618D04 /* AppSettings.swift */,
+				DE1481083683C5D3671F9C18 /* AssistantChatView.swift */,
+				06B1252AEFF2A62517A0C261 /* AssistantEngine.swift */,
+				6F0A98DABCFFA6924308CEC1 /* Branding.swift */,
+				00258BACB14EBAF011ADF64C /* BuddyView.swift */,
 				CBAFAF276195BB144030116E /* CameraPreview.swift */,
+				898BA1EE937653C260057E00 /* ClaudeSessions.swift */,
 				2FE728A3DE1B49C5AF7AA562 /* CollapseWindowStyler.swift */,
 				10F8EDE33192412549ECDF95 /* ContentView.swift */,
 				046C4A1F0B88EF29756891EE /* DreamEdge.swift */,
-				1CD4D473DED04C638ED2558B /* GestureCommands.swift */,
-				679D48EDEAAE4115ABEB649B /* AppIcon.icns */,
-				3551CC650C48446DBA9C5DD2 /* Branding.swift */,
-				E2A5708230DE42E5BBE19DED /* AppSettings.swift */,
-				527B7466751144298BE203A1 /* AssistantEngine.swift */,
-				6AF13DECB3604EC499E3BF16 /* BuddyView.swift */,
-				18B77A5496CF44EB96559E47 /* AssistantChatView.swift */,
-				F0443D9343614D3F9473D5B7 /* OnboardingView.swift */,
-				95FFFD2C19234C69AD2FB818 /* SettingsView.swift */,
+				3EDDFBA4895D7A236C852CB2 /* GestureCommands.swift */,
 				286965547D3BDD08BDDEC4C0 /* HandMenuModel.swift */,
 				E150B563944B2A958EEC7328 /* HandOrbMenuApp.swift */,
 				92C0D434D30EC1C13EC1EA86 /* HandVisionPipeline.swift */,
 				16AF9509850A95E201E331E7 /* MenuBarView.swift */,
 				950D4B1A188FDDD05BA8723C /* MouseControl.swift */,
+				4C21564DB49A2E73B9CBFA07 /* OnboardingView.swift */,
 				9809169F369D55D903E7DA2B /* OrbMenu.swift */,
 				852497A9FD56E812D22BA539 /* OrbSceneView.swift */,
+				AC0D31D7A3CE0C0589CB97BC /* PalmoAvatarView.swift */,
+				09FD6B6226F649B9072CD88D /* SettingsView.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -105,7 +108,6 @@
 			buildConfigurationList = 2C5FE963C3B442EB7B030F0E /* Build configuration list for PBXNativeTarget "HandOrbMenu" */;
 			buildPhases = (
 				93AE36A4809F9E09049045E7 /* Sources */,
-				EE1FEE54AFAE4CD693D3479E /* Resources */,
 			);
 			buildRules = (
 			);
@@ -148,41 +150,32 @@
 		};
 /* End PBXProject section */
 
-/* Begin PBXResourcesBuildPhase section */
-		EE1FEE54AFAE4CD693D3479E /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				C38CBE1840CE40268171CFF3 /* AppIcon.icns in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
-
 /* Begin PBXSourcesBuildPhase section */
 		93AE36A4809F9E09049045E7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6CFCE33FC22370347BEF08CC /* AppSettings.swift in Sources */,
+				57D76CC3505A635E9AB0912A /* AssistantChatView.swift in Sources */,
+				3AE532D1D19CA3CA22108F20 /* AssistantEngine.swift in Sources */,
+				86669DAC7B5B2157A7BE73CF /* Branding.swift in Sources */,
+				E8B7F479600F0BA8DFA3F042 /* BuddyView.swift in Sources */,
 				5A2B604BFFD5791AF15E0876 /* CameraPreview.swift in Sources */,
+				3AAEC0339B130BA38075246B /* ClaudeSessions.swift in Sources */,
 				BEDB0C179472ECAE01950E64 /* CollapseWindowStyler.swift in Sources */,
 				E79C3F6B7AE00F1FEF46E607 /* ContentView.swift in Sources */,
 				6A16F40CA3C0413B183D32C6 /* DreamEdge.swift in Sources */,
-				77F6CBF5588449ABBE23737A /* GestureCommands.swift in Sources */,
-				16C3CD85A1474060A74F0204 /* Branding.swift in Sources */,
-				83E82B4BDC4942AEA79140AA /* AppSettings.swift in Sources */,
-				BDD98553718B4133833ADAC7 /* AssistantEngine.swift in Sources */,
-				7E8EE100660B4C58876E536F /* BuddyView.swift in Sources */,
-				5B6C96A25CAA429CBD226D53 /* AssistantChatView.swift in Sources */,
-				B83C230F4271406582AB5A82 /* OnboardingView.swift in Sources */,
-				2C85DF5E14EF4FCFA4B65604 /* SettingsView.swift in Sources */,
+				6DB2A3BB33D2FBFC6DAA849B /* GestureCommands.swift in Sources */,
 				B6B8D96FC6547DA6F9548884 /* HandMenuModel.swift in Sources */,
 				3420205770E024161C305D17 /* HandOrbMenuApp.swift in Sources */,
 				63B31BA2A6A7FC44AC6B12DA /* HandVisionPipeline.swift in Sources */,
 				9632A5923B7A84D061F85436 /* MenuBarView.swift in Sources */,
 				F708FD64549F5E26E74DA0F6 /* MouseControl.swift in Sources */,
+				816DA290865E3CEAD7620337 /* OnboardingView.swift in Sources */,
 				A239BA5EEE0A151DB2029241 /* OrbMenu.swift in Sources */,
 				0679EA92E5445E9DD2E82DDA /* OrbSceneView.swift in Sources */,
+				8194914CB251D908E0808A37 /* PalmoAvatarView.swift in Sources */,
+				B9AFAE715B0B27C2C371EE77 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -203,7 +196,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = io.medvr.palmo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dicyanin.handorbmenu;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
 			};
@@ -264,7 +257,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_NAME = Palmo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -320,7 +313,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				PRODUCT_NAME = Palmo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
@@ -342,7 +335,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = io.medvr.palmo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dicyanin.handorbmenu;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
 			};

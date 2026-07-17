@@ -5,9 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Palmo</string>
-	<key>CFBundleIconFile</key>
-	<string>AppIcon</string>
+	<string>Hand Orb Menu</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -25,6 +23,6 @@
 	<key>LSMinimumSystemVersion</key>
 	<string>26.0</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Palmo uses the camera to see your hand — wave to summon the orb menu, pinch to click. All hand tracking happens on this Mac; frames never leave your computer.</string>
+	<string>Hand Orb Menu uses the camera to detect your hand. Hold your palm up to summon an orb menu and pinch an orb to open an app.</string>
 </dict>
 </plist>

@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
-/// Branded settings window: General, Gestures, Orb Menu, Assistant, About.
+/// Branded settings window: General, Gestures, Orb Menu, Assistant, Claude Code, About.
 struct SettingsView: View {
     @ObservedObject private var settings = AppSettings.shared
 
@@ -12,6 +12,7 @@ struct SettingsView: View {
             gestures.tabItem { Label("Gestures", systemImage: "hand.raised") }
             orbMenu.tabItem { Label("Orb Menu", systemImage: "circle.hexagongrid") }
             assistant.tabItem { Label("Assistant", systemImage: "sparkles") }
+            ClaudeCodeSettings().tabItem { Label("Claude Code", systemImage: "terminal") }
             about.tabItem { Label("About", systemImage: "info.circle") }
         }
         .frame(width: 440, height: 360)
@@ -108,6 +109,53 @@ struct SettingsView: View {
                 .font(.callout)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// Claude Code integration: install the hooks that let Palmo show an orb
+/// per active Claude Code session in collapsed mode.
+private struct ClaudeCodeSettings: View {
+    @State private var installed = ClaudeSessionStore.checkHooksInstalled()
+    @State private var error: String?
+
+    var body: some View {
+        Form {
+            Section("Session orbs") {
+                Label("When \(Brand.name) is collapsed, each active Claude Code session appears as an orb. Orange means working, green means finished. Hold a fist for 1 second to float the orbs up, then point at one for 1 second to check it off.",
+                      systemImage: "circle.hexagongrid.fill")
+                    .font(.callout)
+            }
+            Section("Hooks") {
+                HStack {
+                    Image(systemName: installed ? "checkmark.circle.fill"
+                                                : "exclamationmark.circle")
+                        .foregroundStyle(installed ? .green : .orange)
+                    Text(installed ? "Claude Code hooks installed"
+                                   : "Hooks not installed")
+                    Spacer()
+                    Button(installed ? "Reinstall" : "Install hooks") {
+                        install()
+                    }
+                }
+                Text("Adds SessionStart, UserPromptSubmit, Stop, and SessionEnd hooks to ~/.claude/settings.json. Existing hooks are kept. Restart running Claude Code sessions to pick them up.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if let error {
+                    Text(error).font(.caption).foregroundStyle(.red)
+                }
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    private func install() {
+        do {
+            try ClaudeSessionStore().installHooks()
+            installed = true
+            error = nil
+        } catch {
+            self.error = "Install failed: \(error.localizedDescription)"
+        }
     }
 }
 
