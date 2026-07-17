@@ -53,6 +53,32 @@ struct DetectedHand: Identifiable {
 
     var isFist: Bool { extendedFingerCount <= 1 }
 
+    /// Whether a specific non-thumb finger is extended.
+    private func extended(_ tip: HandJointID, _ pip: HandJointID) -> Bool {
+        guard let wrist = points[.wrist], let t = points[tip], let p = points[pip]
+        else { return false }
+        return dist(t, wrist) > dist(p, wrist) * 1.18
+    }
+
+    /// Peace sign: index + middle extended, ring + little curled.
+    var isPeaceSign: Bool {
+        extended(.indexTip, .indexIntermediateBase)
+            && extended(.middleTip, .middleIntermediateBase)
+            && !extended(.ringTip, .ringIntermediateBase)
+            && !extended(.littleTip, .littleIntermediateBase)
+    }
+
+    /// Thumbs-up: all four fingers curled, thumb clearly above the wrist and
+    /// pointing up (smaller y = higher; top-left origin).
+    var isThumbsUp: Bool {
+        guard extendedFingerCount == 0,
+              let wrist = points[.wrist],
+              let thumbTip = points[.thumbTip],
+              let thumbBase = points[.thumbKnuckle] else { return false }
+        let up = wrist.y - thumbTip.y
+        return up > handSpan * 1.1 && thumbTip.y < thumbBase.y
+    }
+
     /// Center of the palm: average of the wrist and the four knuckles.
     var palmCenter: CGPoint? {
         let ids: [HandJointID] = [.wrist, .indexKnuckle, .middleKnuckle,

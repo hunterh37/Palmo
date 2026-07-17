@@ -2,46 +2,131 @@ import AppKit
 import CoreGraphics
 import QuartzCore
 
-/// One launchable app on the orb menu.
+/// Notification posted when the "Ask" orb is pinched, so the app can open
+/// the assistant chat window.
+extension Notification.Name {
+    static let openAssistant = Notification.Name("brand.openAssistant")
+}
+
+/// One action on the orb menu: launch an app, toggle media, or summon the
+/// assistant.
 struct MenuAction: Identifiable {
+    enum Kind {
+        case app(bundleID: String)
+        case playPause
+        case assistant
+    }
+
     let id: String
     let name: String
-    let bundleID: String
+    let kind: Kind
     /// Orb tint, 0...1 RGB.
     let color: (r: CGFloat, g: CGFloat, b: CGFloat)
 
     var appURL: URL? {
-        NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
+        guard case .app(let bundleID) = kind else { return nil }
+        return NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
     }
 
     var icon: NSImage? {
-        guard let url = appURL else { return nil }
-        return NSWorkspace.shared.icon(forFile: url.path)
+        switch kind {
+        case .app:
+            guard let url = appURL else { return nil }
+            return NSWorkspace.shared.icon(forFile: url.path)
+        case .playPause:
+            return NSImage(systemSymbolName: "playpause.circle.fill",
+                           accessibilityDescription: "Play/Pause")?
+                .tinted(.white)
+        case .assistant:
+            return NSImage(systemSymbolName: "sparkles",
+                           accessibilityDescription: "Assistant")?
+                .tinted(.white)
+        }
     }
 
     func launch() {
-        guard let url = appURL else { return }
-        NSWorkspace.shared.openApplication(at: url,
-                                           configuration: NSWorkspace.OpenConfiguration(),
-                                           completionHandler: nil)
+        switch kind {
+        case .app:
+            guard let url = appURL else { return }
+            NSWorkspace.shared.openApplication(at: url,
+                                               configuration: NSWorkspace.OpenConfiguration(),
+                                               completionHandler: nil)
+        case .playPause:
+            MediaKey.postPlayPause()
+        case .assistant:
+            NotificationCenter.default.post(name: .openAssistant, object: nil)
+        }
     }
 
-    /// Default ring of built-in apps; entries not installed are dropped.
-    static var defaults: [MenuAction] {
-        [
-            MenuAction(id: "safari", name: "Safari", bundleID: "com.apple.Safari",
-                       color: (0.20, 0.55, 1.00)),
-            MenuAction(id: "mail", name: "Mail", bundleID: "com.apple.mail",
-                       color: (0.35, 0.70, 1.00)),
-            MenuAction(id: "messages", name: "Messages", bundleID: "com.apple.MobileSMS",
-                       color: (0.25, 0.85, 0.40)),
-            MenuAction(id: "notes", name: "Notes", bundleID: "com.apple.Notes",
-                       color: (1.00, 0.80, 0.25)),
-            MenuAction(id: "calendar", name: "Calendar", bundleID: "com.apple.iCal",
-                       color: (1.00, 0.35, 0.30)),
-            MenuAction(id: "music", name: "Music", bundleID: "com.apple.Music",
-                       color: (0.95, 0.30, 0.55)),
-        ].filter { $0.appURL != nil }
+    /// Bundle IDs of the default ring of apps.
+    static let defaultBundleIDs = [
+        "com.apple.Safari", "com.apple.mail", "com.apple.MobileSMS",
+        "com.apple.Notes", "com.apple.iCal", "com.apple.Music",
+    ]
+
+    private static let palette: [(CGFloat, CGFloat, CGFloat)] = [
+        (0.20, 0.55, 1.00), (0.35, 0.70, 1.00), (0.25, 0.85, 0.40),
+        (1.00, 0.80, 0.25), (1.00, 0.35, 0.30), (0.95, 0.30, 0.55),
+        (0.55, 0.45, 1.00), (0.30, 0.85, 0.85),
+    ]
+
+    /// Ring built from the user's chosen bundle IDs (missing apps dropped),
+    /// always followed by the play/pause and assistant orbs.
+    static func ring(bundleIDs: [String]) -> [MenuAction] {
+        var out: [MenuAction] = []
+        for (i, bid) in bundleIDs.prefix(8).enumerated() {
+            let c = palette[i % palette.count]
+            let action = MenuAction(id: bid,
+                                    name: appName(for: bid),
+                                    kind: .app(bundleID: bid),
+                                    color: c)
+            if action.appURL != nil { out.append(action) }
+        }
+        out.append(MenuAction(id: "playpause", name: "Play/Pause",
+                              kind: .playPause, color: (0.55, 0.95, 0.75)))
+        out.append(MenuAction(id: "assistant", name: "Ask \(Brand.name)",
+                              kind: .assistant, color: (0.75, 0.55, 1.00)))
+        return out
+    }
+
+    private static func appName(for bundleID: String) -> String {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
+        else { return bundleID }
+        return FileManager.default.displayName(atPath: url.path)
+            .replacingOccurrences(of: ".app", with: "")
+    }
+}
+
+/// Posts hardware media-key events (play/pause) the same way the keyboard does.
+enum MediaKey {
+    static func postPlayPause() {
+        post(key: 16 /* NX_KEYTYPE_PLAY */)
+    }
+
+    private static func post(key: Int32) {
+        func event(down: Bool) -> NSEvent? {
+            let flags: UInt = down ? 0xA00 : 0xB00
+            let data1 = Int((Int32(key) << 16) | Int32(flags))
+            return NSEvent.otherEvent(with: .systemDefined,
+                                      location: .zero, modifierFlags: [],
+                                      timestamp: 0, windowNumber: 0, context: nil,
+                                      subtype: 8, data1: data1, data2: -1)
+        }
+        event(down: true)?.cgEvent?.post(tap: .cghidEventTap)
+        event(down: false)?.cgEvent?.post(tap: .cghidEventTap)
+    }
+}
+
+extension NSImage {
+    /// A template-symbol image re-rendered in a solid color.
+    func tinted(_ color: NSColor) -> NSImage {
+        let img = NSImage(size: size, flipped: false) { rect in
+            color.set()
+            rect.fill()
+            self.draw(in: rect, from: .zero, operation: .destinationIn, fraction: 1)
+            return true
+        }
+        return img
     }
 }
 
@@ -79,7 +164,8 @@ final class OrbMenuEngine {
     /// 0...1 progress toward the fist-hold dismissal while the menu is open.
     private(set) var dismissProgress: CGFloat = 0
 
-    let actions = MenuAction.defaults
+    /// Current orb ring; rebuilt when the user edits their apps in settings.
+    var actions: [MenuAction] = MenuAction.ring(bundleIDs: MenuAction.defaultBundleIDs)
 
     /// Immediately hide the menu and clear transient gesture state (used when
     /// another interaction mode takes over the hand).

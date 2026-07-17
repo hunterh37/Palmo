@@ -8,14 +8,34 @@ struct MenuBarView: View {
 
     private let previewSize = CGSize(width: 300, height: 170)
 
+    @Environment(\.openWindow) private var openWindow
+
     var body: some View {
         VStack(spacing: 10) {
+            header
             compactPreview
             controls
             footer
         }
         .padding(12)
         .frame(width: 324)
+    }
+
+    private var header: some View {
+        HStack(spacing: 10) {
+            BuddyView(mood: model.buddyMood, gaze: model.buddyGaze)
+                .frame(width: 34, height: 34)
+            Text(Brand.name)
+                .font(.system(.title3, design: .rounded).weight(.bold))
+            Spacer()
+            Button {
+                openWindow(id: "assistant-chat")
+                NSApp.activate(ignoringOtherApps: true)
+            } label: {
+                Label("Chat", systemImage: "bubble.left.and.bubble.right.fill")
+            }
+            .controlSize(.small)
+        }
     }
 
     // MARK: - Compact webcam view
@@ -81,6 +101,9 @@ struct MenuBarView: View {
                 CollapseWindowStyler.shared.showMainWindow()
             } label: {
                 Label("Show Window", systemImage: "macwindow")
+            }
+            SettingsLink {
+                Label("Settings", systemImage: "gearshape")
             }
             Spacer()
             Button(role: .destructive) {

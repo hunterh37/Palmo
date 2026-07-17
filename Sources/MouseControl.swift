@@ -48,8 +48,16 @@ final class MouseControlEngine {
     /// A pinch that starts within this distance of the orb grabs it.
     private let grabRadius: CGFloat = 0.045 * 2.0
     /// Cursor speed: dragging across one full frame height moves the cursor
-    /// roughly this many screen heights.
-    private let sensitivity: CGFloat = 2.4
+    /// roughly this many screen heights. User-tunable in settings.
+    var sensitivity: CGFloat = 2.4
+    /// Quick pinch-and-release on the orb posts a real left click.
+    var pinchClickEnabled = true
+    /// Holding a fist and moving it vertically scrolls the frontmost window.
+    var scrollGestureEnabled = true
+    /// Scroll speed multiplier.
+    var scrollSpeed: CGFloat = 1.0
+    /// Fired after a pinch-tap click is posted (for stats/reactions).
+    var onClick: (() -> Void)?
     /// Low-pass factor for the pinch point (higher = snappier, noisier).
     private let followAlpha: CGFloat = 0.55
     /// Return-to-center easing when released.
@@ -71,6 +79,12 @@ final class MouseControlEngine {
     private var smoothedPinch: CGPoint = .zero
     private var lastHandSeen: CFTimeInterval = 0
     private var lastPinch = false
+    /// When the current grab began and how far it has travelled, used to
+    /// classify a quick low-travel grab as a click.
+    private var grabStart: CFTimeInterval = 0
+    private var grabTravel: CGFloat = 0
+    /// Smoothed fist palm-y while air-scrolling (aspect-corrected units).
+    private var scrollAnchorY: CGFloat?
     /// Virtual cursor position in global display (Quartz, top-left origin)
     /// coordinates; kept locally so sub-pixel deltas accumulate smoothly.
     private var cursor: CGPoint?
@@ -115,11 +129,27 @@ final class MouseControlEngine {
             if pinching, let p = pinchPoint {
                 drag(to: p)
             } else if !pinching || now - lastHandSeen > handLostGrace {
+                let wasQuickTap = pinchClickEnabled
+                    && now - grabStart < 0.30 && grabTravel < 0.025
                 release()
+                if wasQuickTap { postClick() }
             }
         } else if pinching && !lastPinch, let p = pinchPoint,
                   hypot(p.x - center.x, p.y - center.y) < grabRadius {
             beginGrab(at: p, now: now)
+        }
+
+        // Air scroll: hold a fist and move it up/down.
+        if scrollGestureEnabled, !grabbed, let hand, hand.isFist,
+           let palm = hand.palmCenter {
+            let y = corrected(palm).y
+            if let anchor = scrollAnchorY {
+                let dy = y - anchor
+                if abs(dy) > 0.0015 { postScroll(deltaNorm: dy) }
+            }
+            scrollAnchorY = y
+        } else {
+            scrollAnchorY = nil
         }
 
         if !grabbed {
@@ -148,7 +178,32 @@ final class MouseControlEngine {
         if !isTrusted { isTrusted = AXIsProcessTrusted() }
         grabbed = true
         smoothedPinch = p
+        grabStart = now
+        grabTravel = 0
         cursor = currentCursorLocation()
+    }
+
+    /// Posts a left mouse down+up at the current cursor position.
+    private func postClick() {
+        guard isTrusted, let pos = currentCursorLocation() else { return }
+        for type in [CGEventType.leftMouseDown, .leftMouseUp] {
+            CGEvent(mouseEventSource: eventSource, mouseType: type,
+                    mouseCursorPosition: pos, mouseButton: .left)?
+                .post(tap: .cghidEventTap)
+        }
+        onClick?()
+    }
+
+    /// Posts a smooth scroll-wheel event from a normalized vertical delta.
+    private func postScroll(deltaNorm: CGFloat) {
+        guard isTrusted else { return }
+        let pixels = Int32((deltaNorm * 900 * scrollSpeed).rounded())
+        guard pixels != 0 else { return }
+        guard let event = CGEvent(scrollWheelEvent2Source: eventSource,
+                                  units: .pixel, wheelCount: 1,
+                                  wheel1: -pixels, wheel2: 0, wheel3: 0)
+        else { return }
+        event.post(tap: .cghidEventTap)
     }
 
     private func drag(to raw: CGPoint) {
@@ -162,6 +217,7 @@ final class MouseControlEngine {
 
         let dx = smoothedPinch.x - previous.x
         let dy = smoothedPinch.y - previous.y
+        grabTravel += hypot(dx, dy)
         guard dx != 0 || dy != 0 else { return }
         moveCursor(byNormalized: CGSize(width: dx, height: dy))
     }

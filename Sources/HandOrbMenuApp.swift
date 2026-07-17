@@ -1,25 +1,58 @@
 import SwiftUI
 
-/// A macOS app that watches your webcam for an open palm held up to the
-/// camera. When it sees one, a command orb descends from the top of the
-/// frame and pops out into a 3D radial menu of orbs, one per app. Pinch an
-/// orb to open that app. Make a fist (or drop your hand) to dismiss.
+/// A cute, delightful assistant for your Mac. Watches the webcam for your
+/// hand: wave to summon a 3D orb menu, pinch to launch apps or click, make a
+/// fist to scroll — and chat with the buddy anytime.
 @main
 struct HandOrbMenuApp: App {
     @StateObject private var model = HandMenuModel()
+    @ObservedObject private var settings = AppSettings.shared
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(model)
                 .task { await model.start() }
+                .sheet(isPresented: .constant(!settings.onboardingDone)) {
+                    OnboardingView { }
+                        .interactiveDismissDisabled()
+                }
+                .openAssistantWindowBridge()
         }
         .windowResizability(.contentMinSize)
 
-        MenuBarExtra("Hand Orb Menu", systemImage: "hand.raised.circle.fill") {
+        Window("Chat with \(Brand.name)", id: "assistant-chat") {
+            AssistantChatView(assistant: model.assistant)
+        }
+        .windowResizability(.contentMinSize)
+
+        Settings {
+            SettingsView()
+        }
+
+        MenuBarExtra(Brand.name, systemImage: "hand.raised.circle.fill") {
             MenuBarView()
                 .environmentObject(model)
         }
         .menuBarExtraStyle(.window)
+    }
+}
+
+/// Opens the chat window when an "Ask" orb is pinched (posted via
+/// NotificationCenter, since the orb engine has no environment access).
+private struct OpenAssistantBridge: ViewModifier {
+    @Environment(\.openWindow) private var openWindow
+
+    func body(content: Content) -> some View {
+        content.onReceive(NotificationCenter.default.publisher(for: .openAssistant)) { _ in
+            openWindow(id: "assistant-chat")
+            NSApp.activate(ignoringOtherApps: true)
+        }
+    }
+}
+
+extension View {
+    func openAssistantWindowBridge() -> some View {
+        modifier(OpenAssistantBridge())
     }
 }

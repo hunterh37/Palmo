@@ -1,5 +1,7 @@
 import SwiftUI
 import AppKit
+import CoreImage
+import CoreImage.CIFilterBuiltins
 
 /// Applies "collapse mode" to the main window: a small, always-on-top,
 /// borderless-feeling overlay pinned to the top-right corner of the screen.
@@ -62,7 +64,16 @@ final class CollapseWindowStyler {
             window.hasShadow = false
 
             window.setFrame(collapsedFrame(for: window), display: true, animate: animated)
+            // Wait for the frame animation so the mask is sized to the final
+            // content bounds.
+            let delay = animated ? 0.30 : 0.0
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self, self.isCollapsed else { return }
+                self.applyFeatherMask(true)
+            }
+            dreamFadeIn()
         } else {
+            applyFeatherMask(false)
             window.level = .normal
             window.collectionBehavior = []
             if let savedStyleMask { window.styleMask = savedStyleMask }
@@ -79,7 +90,83 @@ final class CollapseWindowStyler {
 
             let target = savedFrame ?? defaultRestoredFrame(for: window)
             window.setFrame(target, display: true, animate: animated)
+            // SwiftUI re-applies its own sizing constraints when the collapse
+            // state flips, which can stomp the animated restore — re-assert.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+                guard let self, !self.isCollapsed, let window = self.window else { return }
+                if window.frame != target {
+                    window.setFrame(target, display: true, animate: false)
+                }
+            }
         }
+    }
+
+    // MARK: - Dream feather
+
+    /// Masks the content view's layer with a pre-blurred rounded rect, so the
+    /// video feathers out into transparency, then adds a slow "breathing"
+    /// scale animation to the mask so the edge drifts like a dream.
+    private func applyFeatherMask(_ enable: Bool) {
+        guard let contentView = window?.contentView else { return }
+        contentView.wantsLayer = true
+        guard let layer = contentView.layer else { return }
+        if enable {
+            let size = contentView.bounds.size
+            let mask = CALayer()
+            mask.contents = Self.featherImage(size: size)
+            mask.frame = CGRect(origin: .zero, size: size)
+            mask.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+            mask.position = CGPoint(x: size.width / 2, y: size.height / 2)
+
+            let breathe = CABasicAnimation(keyPath: "transform.scale")
+            breathe.fromValue = 1.0
+            breathe.toValue = 1.045
+            breathe.duration = 2.6
+            breathe.autoreverses = true
+            breathe.repeatCount = .infinity
+            breathe.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            mask.add(breathe, forKey: "breathe")
+
+            layer.mask = mask
+        } else {
+            layer.mask = nil
+        }
+    }
+
+    /// Fades the whole window in from nothing, like the overlay is
+    /// materializing out of the corner.
+    private func dreamFadeIn() {
+        guard let window else { return }
+        window.alphaValue = 0
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 1.4
+            ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            window.animator().alphaValue = 1
+        }
+    }
+
+    /// White rounded rect, gaussian-blurred, rendered once as the alpha mask.
+    private static func featherImage(size: CGSize) -> CGImage? {
+        let scale: CGFloat = 2
+        let w = Int(size.width * scale), h = Int(size.height * scale)
+        guard let ctx = CGContext(
+            data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        let inset: CGFloat = 30 * scale
+        let rect = CGRect(x: 0, y: 0, width: CGFloat(w), height: CGFloat(h))
+            .insetBy(dx: inset, dy: inset)
+        ctx.setFillColor(CGColor(red: 1, green: 1, blue: 1, alpha: 1))
+        ctx.addPath(CGPath(roundedRect: rect, cornerWidth: 40 * scale,
+                           cornerHeight: 40 * scale, transform: nil))
+        ctx.fillPath()
+        guard let hard = ctx.makeImage() else { return nil }
+
+        let blurred = CIImage(cgImage: hard)
+            .clampedToExtent()
+            .applyingGaussianBlur(sigma: 12 * scale)
+        return CIContext().createCGImage(
+            blurred, from: CGRect(x: 0, y: 0, width: CGFloat(w), height: CGFloat(h)))
     }
 
     private func collapsedFrame(for window: NSWindow) -> NSRect {
