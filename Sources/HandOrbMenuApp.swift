@@ -8,6 +8,11 @@ struct HandOrbMenuApp: App {
     @StateObject private var model = HandMenuModel()
     @ObservedObject private var settings = AppSettings.shared
 
+    init() {
+        // Dev-only: `PALMO_ICON_OUT=/path` renders the app icon and exits.
+        IconExporter.exportIfRequested()
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()

@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Launch Claude Code wired to the Palmo channel so Palmo can inject replies
+# into this session. Use exactly like `claude`:  palmo-claude [args…]
+#
+# What it does:
+#   1. Picks a free localhost port and exports PALMO_PORT (the channel binds it,
+#      and the Palmo hook mirrors it into the session JSON for routing).
+#   2. Ensures a "palmo" MCP server is registered in ~/.claude.json.
+#   3. Launches Claude with the channel loaded (research-preview flag).
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CHANNEL="$SCRIPT_DIR/index.mjs"
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "palmo-claude: node is required (for the channel server)." >&2
+  exit 1
+fi
+
+# node_modules present? (needs @modelcontextprotocol/sdk)
+if [ ! -d "$SCRIPT_DIR/node_modules/@modelcontextprotocol" ]; then
+  echo "palmo-claude: installing channel dependencies…" >&2
+  (cd "$SCRIPT_DIR" && npm install --silent)
+fi
+
+# 1. Pick a free ephemeral port.
+PALMO_PORT="$(node -e 'const s=require("net").createServer();s.listen(0,"127.0.0.1",()=>{console.log(s.address().port);s.close()})')"
+export PALMO_PORT
+echo "palmo-claude: channel port $PALMO_PORT" >&2
+
+# 2. Ensure ~/.claude.json registers the palmo channel server.
+node - "$CHANNEL" <<'NODE'
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+const channel = process.argv[2];
+const cfgPath = path.join(os.homedir(), ".claude.json");
+let cfg = {};
+try { cfg = JSON.parse(fs.readFileSync(cfgPath, "utf8")); } catch {}
+cfg.mcpServers = cfg.mcpServers || {};
+cfg.mcpServers.palmo = { command: "node", args: [channel] };
+fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
+NODE
+
+# 3. Launch Claude with the channel. Pass through all user args.
+exec claude --dangerously-load-development-channels server:palmo "$@"

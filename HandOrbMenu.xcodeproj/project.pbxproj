@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		0679EA92E5445E9DD2E82DDA /* OrbSceneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 852497A9FD56E812D22BA539 /* OrbSceneView.swift */; };
+		12E3B83BE340B7929B206979 /* IconExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 758133192CBD8094B2FFD54B /* IconExporter.swift */; };
+		1FE5534691FA7937E11D28AA /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 0F8817A1975F26F73C481EF2 /* AppIcon.icns */; };
 		3420205770E024161C305D17 /* HandOrbMenuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E150B563944B2A958EEC7328 /* HandOrbMenuApp.swift */; };
 		3AAEC0339B130BA38075246B /* ClaudeSessions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 898BA1EE937653C260057E00 /* ClaudeSessions.swift */; };
 		3AE532D1D19CA3CA22108F20 /* AssistantEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06B1252AEFF2A62517A0C261 /* AssistantEngine.swift */; };
@@ -22,6 +24,8 @@
 		86669DAC7B5B2157A7BE73CF /* Branding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F0A98DABCFFA6924308CEC1 /* Branding.swift */; };
 		9632A5923B7A84D061F85436 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16AF9509850A95E201E331E7 /* MenuBarView.swift */; };
 		A239BA5EEE0A151DB2029241 /* OrbMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9809169F369D55D903E7DA2B /* OrbMenu.swift */; };
+		AEF448609956ECD3584B3D99 /* ClaudeReplySender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8ED9E84D04FB187399C1451A /* ClaudeReplySender.swift */; };
+		B6796C3A5F441712A105275E /* ReplyPresetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6073C8D7435AEA733E814BF /* ReplyPresetEngine.swift */; };
 		B6B8D96FC6547DA6F9548884 /* HandMenuModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 286965547D3BDD08BDDEC4C0 /* HandMenuModel.swift */; };
 		B9AFAE715B0B27C2C371EE77 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09FD6B6226F649B9072CD88D /* SettingsView.swift */; };
 		BEDB0C179472ECAE01950E64 /* CollapseWindowStyler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE728A3DE1B49C5AF7AA562 /* CollapseWindowStyler.swift */; };
@@ -35,6 +39,7 @@
 		046C4A1F0B88EF29756891EE /* DreamEdge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DreamEdge.swift; sourceTree = "<group>"; };
 		06B1252AEFF2A62517A0C261 /* AssistantEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantEngine.swift; sourceTree = "<group>"; };
 		09FD6B6226F649B9072CD88D /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		0F8817A1975F26F73C481EF2 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
 		10F8EDE33192412549ECDF95 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		16AF9509850A95E201E331E7 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		286965547D3BDD08BDDEC4C0 /* HandMenuModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandMenuModel.swift; sourceTree = "<group>"; };
@@ -42,20 +47,31 @@
 		3EDDFBA4895D7A236C852CB2 /* GestureCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureCommands.swift; sourceTree = "<group>"; };
 		4C21564DB49A2E73B9CBFA07 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		6F0A98DABCFFA6924308CEC1 /* Branding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Branding.swift; sourceTree = "<group>"; };
+		758133192CBD8094B2FFD54B /* IconExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconExporter.swift; sourceTree = "<group>"; };
 		852497A9FD56E812D22BA539 /* OrbSceneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbSceneView.swift; sourceTree = "<group>"; };
 		898BA1EE937653C260057E00 /* ClaudeSessions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeSessions.swift; sourceTree = "<group>"; };
+		8ED9E84D04FB187399C1451A /* ClaudeReplySender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeReplySender.swift; sourceTree = "<group>"; };
 		92C0D434D30EC1C13EC1EA86 /* HandVisionPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandVisionPipeline.swift; sourceTree = "<group>"; };
 		950D4B1A188FDDD05BA8723C /* MouseControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseControl.swift; sourceTree = "<group>"; };
 		9809169F369D55D903E7DA2B /* OrbMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbMenu.swift; sourceTree = "<group>"; };
 		AC0D31D7A3CE0C0589CB97BC /* PalmoAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PalmoAvatarView.swift; sourceTree = "<group>"; };
 		B8E8AABFC2CBFE2569618D04 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		CBAFAF276195BB144030116E /* CameraPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreview.swift; sourceTree = "<group>"; };
+		D6073C8D7435AEA733E814BF /* ReplyPresetEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplyPresetEngine.swift; sourceTree = "<group>"; };
 		DE1481083683C5D3671F9C18 /* AssistantChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantChatView.swift; sourceTree = "<group>"; };
 		E150B563944B2A958EEC7328 /* HandOrbMenuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandOrbMenuApp.swift; sourceTree = "<group>"; };
 		FC2866BC3436DF38816FA68F /* HandOrbMenu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HandOrbMenu.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		3C951552589C348A8213235E /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				0F8817A1975F26F73C481EF2 /* AppIcon.icns */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		4FAE7D533B15340C21A3D52A /* Sources */ = {
 			isa = PBXGroup;
 			children = (
@@ -65,6 +81,7 @@
 				6F0A98DABCFFA6924308CEC1 /* Branding.swift */,
 				00258BACB14EBAF011ADF64C /* BuddyView.swift */,
 				CBAFAF276195BB144030116E /* CameraPreview.swift */,
+				8ED9E84D04FB187399C1451A /* ClaudeReplySender.swift */,
 				898BA1EE937653C260057E00 /* ClaudeSessions.swift */,
 				2FE728A3DE1B49C5AF7AA562 /* CollapseWindowStyler.swift */,
 				10F8EDE33192412549ECDF95 /* ContentView.swift */,
@@ -73,12 +90,14 @@
 				286965547D3BDD08BDDEC4C0 /* HandMenuModel.swift */,
 				E150B563944B2A958EEC7328 /* HandOrbMenuApp.swift */,
 				92C0D434D30EC1C13EC1EA86 /* HandVisionPipeline.swift */,
+				758133192CBD8094B2FFD54B /* IconExporter.swift */,
 				16AF9509850A95E201E331E7 /* MenuBarView.swift */,
 				950D4B1A188FDDD05BA8723C /* MouseControl.swift */,
 				4C21564DB49A2E73B9CBFA07 /* OnboardingView.swift */,
 				9809169F369D55D903E7DA2B /* OrbMenu.swift */,
 				852497A9FD56E812D22BA539 /* OrbSceneView.swift */,
 				AC0D31D7A3CE0C0589CB97BC /* PalmoAvatarView.swift */,
+				D6073C8D7435AEA733E814BF /* ReplyPresetEngine.swift */,
 				09FD6B6226F649B9072CD88D /* SettingsView.swift */,
 			);
 			path = Sources;
@@ -87,6 +106,7 @@
 		5B2C77A175DB745D06821150 = {
 			isa = PBXGroup;
 			children = (
+				3C951552589C348A8213235E /* Resources */,
 				4FAE7D533B15340C21A3D52A /* Sources */,
 				9FB2440DFB22D29FCBAE9D69 /* Products */,
 			);
@@ -108,6 +128,7 @@
 			buildConfigurationList = 2C5FE963C3B442EB7B030F0E /* Build configuration list for PBXNativeTarget "HandOrbMenu" */;
 			buildPhases = (
 				93AE36A4809F9E09049045E7 /* Sources */,
+				591198008D70C969298FE5A4 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -150,6 +171,17 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		591198008D70C969298FE5A4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1FE5534691FA7937E11D28AA /* AppIcon.icns in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		93AE36A4809F9E09049045E7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -161,6 +193,7 @@
 				86669DAC7B5B2157A7BE73CF /* Branding.swift in Sources */,
 				E8B7F479600F0BA8DFA3F042 /* BuddyView.swift in Sources */,
 				5A2B604BFFD5791AF15E0876 /* CameraPreview.swift in Sources */,
+				AEF448609956ECD3584B3D99 /* ClaudeReplySender.swift in Sources */,
 				3AAEC0339B130BA38075246B /* ClaudeSessions.swift in Sources */,
 				BEDB0C179472ECAE01950E64 /* CollapseWindowStyler.swift in Sources */,
 				E79C3F6B7AE00F1FEF46E607 /* ContentView.swift in Sources */,
@@ -169,12 +202,14 @@
 				B6B8D96FC6547DA6F9548884 /* HandMenuModel.swift in Sources */,
 				3420205770E024161C305D17 /* HandOrbMenuApp.swift in Sources */,
 				63B31BA2A6A7FC44AC6B12DA /* HandVisionPipeline.swift in Sources */,
+				12E3B83BE340B7929B206979 /* IconExporter.swift in Sources */,
 				9632A5923B7A84D061F85436 /* MenuBarView.swift in Sources */,
 				F708FD64549F5E26E74DA0F6 /* MouseControl.swift in Sources */,
 				816DA290865E3CEAD7620337 /* OnboardingView.swift in Sources */,
 				A239BA5EEE0A151DB2029241 /* OrbMenu.swift in Sources */,
 				0679EA92E5445E9DD2E82DDA /* OrbSceneView.swift in Sources */,
 				8194914CB251D908E0808A37 /* PalmoAvatarView.swift in Sources */,
+				B6796C3A5F441712A105275E /* ReplyPresetEngine.swift in Sources */,
 				B9AFAE715B0B27C2C371EE77 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -197,6 +232,7 @@
 					"@executable_path/../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.dicyanin.handorbmenu;
+				PRODUCT_NAME = Palmo;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
 			};
@@ -336,6 +372,7 @@
 					"@executable_path/../Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.dicyanin.handorbmenu;
+				PRODUCT_NAME = Palmo;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
 			};

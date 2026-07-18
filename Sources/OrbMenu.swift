@@ -143,6 +143,8 @@ struct OrbDisplay: Identifiable {
     var pop: CGFloat
     var highlighted: Bool
     var isCommand: Bool
+    /// 0...1 fill toward point-and-dwell selection for this orb.
+    var dwellProgress: CGFloat = 0
     var action: MenuAction?
 }
 
@@ -163,6 +165,15 @@ final class OrbMenuEngine {
     private(set) var firedAction: MenuAction?
     /// 0...1 progress toward the fist-hold dismissal while the menu is open.
     private(set) var dismissProgress: CGFloat = 0
+    /// 0...1 progress of the avatar-touch hold that summons the menu.
+    private(set) var summonProgress: CGFloat = 0
+
+    /// Where the Palmo avatar sits, in normalized (0...1, top-left origin)
+    /// video coordinates. The menu summons from — and opens next to — it.
+    let avatarCenter = CGPoint(x: 0.30, y: 0.72)
+    /// Touch radius around the avatar, as a fraction of frame height
+    /// (aspect-corrected space).
+    let avatarTouchRadius: CGFloat = 0.11
 
     /// Current orb ring; rebuilt when the user edits their apps in settings.
     var actions: [MenuAction] = MenuAction.ring(bundleIDs: MenuAction.defaultBundleIDs)
@@ -174,9 +185,14 @@ final class OrbMenuEngine {
         orbs = []
         firedAction = nil
         dismissProgress = 0
-        openPalmSince = nil
+        summonProgress = 0
+        avatarTouchSince = nil
         fistSince = nil
         lastPinch = false
+        dwellOrbID = nil
+        dwellSince = nil
+        dwellProgress = 0
+        fingertip = nil
     }
 
     // Layout tuning (aspect-corrected units: fractions of frame height).
@@ -189,12 +205,28 @@ final class OrbMenuEngine {
     private let fanDuration: CFTimeInterval = 0.35
     /// How long a fist must be held to dismiss the open menu.
     private let fistHold: CFTimeInterval = 1.0
+    /// How long the index fingertip must rest on an orb to select it.
+    private let dwellHold: CFTimeInterval = 1.0
+    /// Grace period after the menu opens before selection can begin, so the
+    /// finger that just summoned the menu can't instantly fire an orb while
+    /// the fan is still animating out.
+    private let selectionGrace: CFTimeInterval = 0.5
+    /// How long the fingertip must rest on the avatar to summon the menu.
+    private let avatarTouchHold: CFTimeInterval = 1.0
 
     // Gesture stability.
-    private var openPalmSince: CFTimeInterval?
+    private var avatarTouchSince: CFTimeInterval?
     private var fistSince: CFTimeInterval?
     private var lastHandSeen: CFTimeInterval = 0
     private var lastPinch = false
+    /// Point-and-dwell selection: the orb the fingertip currently rests on,
+    /// when the dwell began, and the accumulated 0...1 fill.
+    private var dwellOrbID: String?
+    private var dwellSince: CFTimeInterval?
+    private(set) var dwellProgress: CGFloat = 0
+    /// Index fingertip in normalized video coordinates while the menu is open
+    /// and the finger is extended — drives the on-screen selection reticle.
+    private(set) var fingertip: CGPoint?
 
     /// Smoothed anchor (palm center) in aspect-corrected space.
     private var anchor: CGPoint = .zero
@@ -208,21 +240,50 @@ final class OrbMenuEngine {
         if hand != nil { lastHandSeen = now }
 
         trackGestures(hand: hand, now: now)
-        // The menu anchors to the palm only until it settles open. Once open
-        // it stays put so the hand is free to travel and pinch orbs.
-        if case .hidden = state { followPalm(hand: hand) }
 
         dismissProgress = 0
+        summonProgress = 0
+        fingertip = nil
+        // Dwell only accumulates while the menu is open; clear it otherwise.
+        if case .open = state {} else {
+            dwellOrbID = nil
+            dwellSince = nil
+            dwellProgress = 0
+        }
         switch state {
         case .hidden:
-            if let since = openPalmSince, now - since > 0.45, hand?.palmCenter != nil {
-                snapAnchor(to: hand)
-                state = .summoning(start: now)
+            // Summon by resting the index fingertip on the avatar for 1s.
+            if let tip = hand?.indexTip ?? hand?.pinchPoint {
+                let p = corrected(tip)
+                let a = corrected(avatarCenter)
+                if hypot(p.x - a.x, p.y - a.y) < avatarTouchRadius {
+                    if avatarTouchSince == nil { avatarTouchSince = now }
+                    summonProgress = min(CGFloat((now - avatarTouchSince!) / avatarTouchHold), 1)
+                    if summonProgress >= 1 {
+                        summonProgress = 0
+                        avatarTouchSince = nil
+                        // The menu opens next to the avatar.
+                        anchor = a
+                        state = .summoning(start: now)
+                    }
+                } else {
+                    avatarTouchSince = nil
+                }
+            } else {
+                avatarTouchSince = nil
             }
         case .summoning(let start):
             if now - start >= summonDuration { state = .open(start: now) }
-        case .open:
-            handleSelection(hand: hand, now: now)
+        case .open(let start):
+            // Show the reticle on the extended index fingertip.
+            if let hand, hand.isIndexExtended, let tip = hand.indexTip {
+                fingertip = tip
+            }
+            // Selection waits out a short grace period so the finger that
+            // summoned the menu can't instantly fire an orb.
+            if now - start >= selectionGrace {
+                handleSelection(hand: hand, now: now)
+            }
             if let since = fistSince {
                 dismissProgress = min(CGFloat((now - since) / fistHold), 1)
                 if dismissProgress >= 1 {
@@ -244,12 +305,10 @@ final class OrbMenuEngine {
     // MARK: - Gestures
 
     private func trackGestures(hand: DetectedHand?, now: CFTimeInterval) {
-        if let hand, hand.isOpenPalmUp {
-            if openPalmSince == nil { openPalmSince = now }
-        } else {
-            openPalmSince = nil
-        }
-        if let hand, hand.isFist {
+        // Only trust a fist when all fingertips were actually tracked this
+        // frame; missing joints read as "curled" and fake a fist, which was
+        // dismissing the menu while the user pointed at orbs.
+        if let hand, hand.isFist, hand.hasAllFingerTips {
             if fistSince == nil { fistSince = now }
         } else {
             fistSince = nil
@@ -264,33 +323,51 @@ final class OrbMenuEngine {
     private func corrected(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x * aspect, y: p.y) }
     private func normalized(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x / aspect, y: p.y) }
 
-    private func snapAnchor(to hand: DetectedHand?) {
-        if let c = hand?.palmCenter { anchor = corrected(c) }
-    }
-
-    private func followPalm(hand: DetectedHand?) {
-        guard let c = hand?.palmCenter else { return }
-        let target = corrected(c)
-        // Critically damped-ish lerp keeps the menu glued but calm.
-        anchor.x += (target.x - anchor.x) * 0.14
-        anchor.y += (target.y - anchor.y) * 0.14
-    }
-
     // MARK: - Selection
 
+    /// Point-and-dwell selection: rest the index fingertip on an orb and hold
+    /// it there briefly to launch. Sliding off an orb cancels the dwell. Hit
+    /// tests run in aspect-corrected space so the fingertip and orb centers
+    /// share coordinates.
     private func handleSelection(hand: DetectedHand?, now: CFTimeInterval) {
-        guard let hand else { return }
-        let pinchStarted = hand.isPinching && !lastPinch
-        guard pinchStarted, let point = hand.pinchPoint ?? hand.indexTip else { return }
+        // Index finger only: the finger must be extended and its tip tracked.
+        guard let hand, hand.isIndexExtended, let point = hand.indexTip else {
+            dwellOrbID = nil
+            dwellSince = nil
+            dwellProgress = 0
+            return
+        }
         let p = corrected(point)
+        var hit: (action: MenuAction, center: CGPoint)?
         for orb in fanCenters(progress: 1) {
-            let d = hypot(p.x - orb.center.x, p.y - orb.center.y)
-            if d < orbRadius * 1.35, let action = orb.action {
-                firedAction = action
-                action.launch()
-                state = .launching(action: action, at: orb.center, start: now)
-                return
+            guard let action = orb.action else { continue }
+            let oc = corrected(orb.center)
+            if hypot(p.x - oc.x, p.y - oc.y) < orbRadius * 1.35 {
+                hit = (action, orb.center)
+                break
             }
+        }
+        guard let hit else {
+            // Fingertip is off every orb; reset the dwell.
+            dwellOrbID = nil
+            dwellSince = nil
+            dwellProgress = 0
+            return
+        }
+        // Restart the timer whenever the fingertip moves to a different orb.
+        if dwellOrbID != hit.action.id {
+            dwellOrbID = hit.action.id
+            dwellSince = now
+        }
+        let since = dwellSince ?? now
+        dwellProgress = min(CGFloat((now - since) / dwellHold), 1)
+        if dwellProgress >= 1 {
+            dwellOrbID = nil
+            dwellSince = nil
+            dwellProgress = 0
+            firedAction = hit.action
+            hit.action.launch()
+            state = .launching(action: hit.action, at: hit.center, start: now)
         }
     }
 
@@ -388,6 +465,8 @@ final class OrbMenuEngine {
                     let d = hypot(h.x - target.x, h.y - target.y)
                     orb.highlighted = d < orbRadius * 1.35
                 }
+                // Fill the orb the fingertip is dwelling on.
+                if orb.action?.id == dwellOrbID { orb.dwellProgress = dwellProgress }
                 out.append(orb)
             }
             return out

@@ -51,13 +51,33 @@ struct DetectedHand: Identifiable {
         return above >= 3
     }
 
-    var isFist: Bool { extendedFingerCount <= 1 }
+    /// A true fist: every non-thumb finger curled. A one-finger point
+    /// (index extended to select an orb) must NOT read as a fist, so we
+    /// require zero extended fingers and explicitly exclude an index point.
+    var isFist: Bool {
+        guard extendedFingerCount == 0 else { return false }
+        return !extended(.indexTip, .indexIntermediateBase)
+    }
 
     /// Whether a specific non-thumb finger is extended.
     private func extended(_ tip: HandJointID, _ pip: HandJointID) -> Bool {
         guard let wrist = points[.wrist], let t = points[tip], let p = points[pip]
         else { return false }
         return dist(t, wrist) > dist(p, wrist) * 1.18
+    }
+
+    /// Index finger clearly extended (a "point" gesture usable for selection).
+    var isIndexExtended: Bool {
+        extended(.indexTip, .indexIntermediateBase)
+    }
+
+    /// All four non-thumb fingertips were confidently tracked this frame.
+    /// Gestures that depend on fingers being *curled* (fist) must only fire
+    /// when the tips are actually seen; missing joints otherwise read as
+    /// "curled" and fake a fist.
+    var hasAllFingerTips: Bool {
+        points[.indexTip] != nil && points[.middleTip] != nil
+            && points[.ringTip] != nil && points[.littleTip] != nil
     }
 
     /// Peace sign: index + middle extended, ring + little curled.

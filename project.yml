@@ -11,16 +11,19 @@ targets:
     platform: macOS
     sources:
       - Sources
+      - Resources
     info:
       path: Generated/Info.plist
       properties:
-        CFBundleDisplayName: Hand Orb Menu
+        CFBundleDisplayName: Palmo
+        CFBundleIconFile: AppIcon
         LSMinimumSystemVersion: "26.0"
         NSCameraUsageDescription: >-
-          Hand Orb Menu uses the camera to detect your hand. Hold your palm up
+          Palmo uses the camera to detect your hand. Hold your palm up
           to summon an orb menu and pinch an orb to open an app.
     settings:
       base:
+        PRODUCT_NAME: Palmo
         PRODUCT_BUNDLE_IDENTIFIER: com.dicyanin.handorbmenu
         GENERATE_INFOPLIST_FILE: NO
         SWIFT_VERSION: "5.9"

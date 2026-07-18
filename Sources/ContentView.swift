@@ -154,7 +154,7 @@ struct ContentView: View {
     private var gestureCheatSheet: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Gestures").microLabel()
-            cheatRow("🖐️", "App orbs")
+            cheatRow("👉", "Touch Palmo — app orbs")
             cheatRow("🤏", "Click / launch")
             cheatRow("✊", "Scroll")
             cheatRow("✌️", settings.peaceCommand.label)
@@ -230,6 +230,13 @@ struct ContentView: View {
                     .background(Color.black.opacity(0.85))
                 } else if model.cameraAuthorized {
                     CameraPreview(session: model.session, mirrored: model.mirrored)
+                    AvatarSummonOverlay(progress: model.avatarSummonProgress,
+                                        center: model.avatarCenter,
+                                        touchRadius: model.avatarTouchRadius,
+                                        mood: model.buddyMood,
+                                        gaze: model.buddyGaze,
+                                        menuOpen: !model.orbs.isEmpty,
+                                        size: geo.size, videoSize: model.videoSize)
                     OrbSceneView(orbs: model.orbs, size: geo.size,
                                  videoSize: model.videoSize)
                         .allowsHitTesting(false)
@@ -238,6 +245,12 @@ struct ContentView: View {
                     DismissRingOverlay(orbs: model.orbs,
                                        progress: model.dismissProgress,
                                        size: geo.size, videoSize: model.videoSize)
+                    if let tip = model.selectionFingertip {
+                        FingertipReticleOverlay(tip: tip,
+                                                progress: model.selectionDwellProgress,
+                                                size: geo.size,
+                                                videoSize: model.videoSize)
+                    }
                     if let mouseOrb = model.mouseOrb {
                         MouseOrbOverlay(orb: mouseOrb, size: geo.size,
                                         videoSize: model.videoSize)
@@ -354,6 +367,8 @@ struct ContentView: View {
                     HandOverlay(hands: model.hands, size: geo.size,
                                 videoSize: model.videoSize)
                     ClaudeOrbOverlay(orbs: model.claudeOrbs,
+                                     replyOrbs: model.claudeReplyOrbs,
+                                     generating: model.claudeGenerating,
                                      fistProgress: model.claudeFistProgress,
                                      size: geo.size, videoSize: model.videoSize)
                 } else {
@@ -478,6 +493,122 @@ struct ContentView: View {
         }
         .foregroundStyle(.white)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// Palmo living inside the camera view: the touch target that summons the
+/// orb menu. Point your index finger at him and hold for 1 second — a
+/// circular progress ring fills around him, then the menu pops open beside
+/// him.
+private struct AvatarSummonOverlay: View {
+    let progress: CGFloat
+    /// Normalized video-space center of the avatar (top-left origin).
+    let center: CGPoint
+    /// Touch radius as a fraction of frame height.
+    let touchRadius: CGFloat
+    let mood: BuddyMood
+    let gaze: CGPoint
+    let menuOpen: Bool
+    let size: CGSize
+    let videoSize: CGSize
+
+    var body: some View {
+        let c = point(center)
+        let r = touchRadius * drawnSize().height
+        ZStack {
+            // Soft halo so Palmo reads against any webcam background.
+            Circle()
+                .fill(Brand.accent.opacity(progress > 0.02 ? 0.28 : 0.14))
+                .frame(width: r * 2.3, height: r * 2.3)
+                .blur(radius: r * 0.35)
+            // Touch-hold progress ring.
+            Circle()
+                .stroke(.white.opacity(0.25), lineWidth: 4)
+                .frame(width: r * 2, height: r * 2)
+                .opacity(progress > 0.02 ? 1 : 0)
+            Circle()
+                .trim(from: 0, to: progress)
+                .stroke(Brand.accent,
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .frame(width: r * 2, height: r * 2)
+            PalmoAvatarView(mood: mood, gaze: gaze, waving: menuOpen)
+                .frame(width: r * 1.9, height: r * 1.9)
+        }
+        .scaleEffect(progress > 0.02 ? 1.08 : 1.0)
+        .animation(.spring(duration: 0.3), value: progress > 0.02)
+        .position(c)
+        .allowsHitTesting(false)
+    }
+
+    private func drawnSize() -> CGSize {
+        guard videoSize.width > 0, videoSize.height > 0,
+              size.width > 0, size.height > 0 else { return size }
+        let scale = max(size.width / videoSize.width, size.height / videoSize.height)
+        return CGSize(width: videoSize.width * scale, height: videoSize.height * scale)
+    }
+
+    private func point(_ p: CGPoint) -> CGPoint {
+        let drawn = drawnSize()
+        let offset = CGPoint(x: (size.width - drawn.width) / 2,
+                             y: (size.height - drawn.height) / 2)
+        return CGPoint(x: offset.x + p.x * drawn.width,
+                       y: offset.y + p.y * drawn.height)
+    }
+}
+
+/// Selection reticle pinned to the extended index fingertip while the orb
+/// menu is open: an empty circle that fills clockwise over the 1-second
+/// dwell when it rests on an orb.
+private struct FingertipReticleOverlay: View {
+    /// Fingertip in normalized video coordinates (top-left origin).
+    let tip: CGPoint
+    /// 0...1 dwell fill while resting on an orb.
+    let progress: CGFloat
+    let size: CGSize
+    let videoSize: CGSize
+
+    var body: some View {
+        let c = point(tip)
+        let r: CGFloat = 0.022 * drawnSize().height
+        ZStack {
+            // Empty ring so the user can see exactly where they're pointing.
+            Circle()
+                .stroke(.white.opacity(0.85), lineWidth: 2.5)
+                .frame(width: r * 2, height: r * 2)
+                .shadow(color: .black.opacity(0.6), radius: 3)
+            // Circular progress fill while dwelling on an orb.
+            if progress > 0.02 {
+                Circle()
+                    .fill(Brand.accent.opacity(0.25))
+                    .frame(width: r * 2, height: r * 2)
+                Circle()
+                    .trim(from: 0, to: progress)
+                    .stroke(Brand.accent,
+                            style: StrokeStyle(lineWidth: 3.5, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: r * 2, height: r * 2)
+            }
+        }
+        .scaleEffect(progress > 0.02 ? 1.15 : 1.0)
+        .animation(.easeOut(duration: 0.15), value: progress > 0.02)
+        .position(c)
+        .allowsHitTesting(false)
+    }
+
+    private func drawnSize() -> CGSize {
+        guard videoSize.width > 0, videoSize.height > 0,
+              size.width > 0, size.height > 0 else { return size }
+        let scale = max(size.width / videoSize.width, size.height / videoSize.height)
+        return CGSize(width: videoSize.width * scale, height: videoSize.height * scale)
+    }
+
+    private func point(_ p: CGPoint) -> CGPoint {
+        let drawn = drawnSize()
+        let offset = CGPoint(x: (size.width - drawn.width) / 2,
+                             y: (size.height - drawn.height) / 2)
+        return CGPoint(x: offset.x + p.x * drawn.width,
+                       y: offset.y + p.y * drawn.height)
     }
 }
 

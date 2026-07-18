@@ -14,7 +14,14 @@ final class HandMenuModel: ObservableObject {
     @Published var orbs: [OrbDisplay] = []
     /// 0...1 progress of the fist-hold dismissal, drawn as a ring on the command orb.
     @Published var dismissProgress: CGFloat = 0
-    @Published var statusText: String = "Hold your palm up to the camera"
+    /// 0...1 progress of the avatar-touch hold, drawn as a ring around Palmo.
+    @Published var avatarSummonProgress: CGFloat = 0
+    @Published var statusText: String = "Point at Palmo to open the menu"
+    /// Index fingertip (normalized video coords) while the menu is open and
+    /// the finger is extended — drives the selection reticle.
+    @Published var selectionFingertip: CGPoint?
+    /// 0...1 fill of the 1-second dwell on the orb under the fingertip.
+    @Published var selectionDwellProgress: CGFloat = 0
     @Published var launchedName: String?
     /// Pixel size of the camera frames, for aspect-fill-correct overlay mapping.
     @Published var videoSize: CGSize = CGSize(width: 16, height: 9)
@@ -48,10 +55,19 @@ final class HandMenuModel: ObservableObject {
 
     /// Claude Code session orbs shown in collapsed mode.
     @Published var claudeOrbs: [ClaudeOrbDisplay] = []
+    /// Reply-preset orbs shown while composing a response to a session.
+    @Published var claudeReplyOrbs: [ReplyOrbDisplay] = []
+    /// True while a session is selected and replies are being drafted/chosen.
+    @Published var claudeComposing: Bool = false
+    /// True while the on-device model is still drafting replies.
+    @Published var claudeGenerating: Bool = false
     /// 0...1 fill of the fist-hold ring that raises/lowers the Claude orbs.
     @Published var claudeFistProgress: CGFloat = 0
     /// Live Claude Code sessions (hook-fed).
     let claudeSessions = ClaudeSessionStore()
+    /// On-device reply drafting for the selected session.
+    let replyEngine = ReplyPresetEngine()
+    private let replySender = ClaudeReplySender()
 
     let session = AVCaptureSession()
     /// The buddy assistant (chat) engine, shared with the chat window.
@@ -77,9 +93,15 @@ final class HandMenuModel: ObservableObject {
     private var launchClearTask: Task<Void, Never>?
     private var settingsSub: AnyCancellable?
 
+    /// Where the in-camera Palmo avatar sits, in normalized video coordinates.
+    var avatarCenter: CGPoint { engine.avatarCenter }
+    /// Avatar touch radius as a fraction of frame height.
+    var avatarTouchRadius: CGFloat { engine.avatarTouchRadius }
+
     /// Buddy face state derived from tracking + assistant activity.
     var buddyMood: BuddyMood {
         if assistant.isThinking { return .thinking }
+        if avatarSummonProgress > 0.02 { return .happy }
         if hands.contains(where: { $0.isPinching }) { return .happy }
         if !hands.isEmpty { return .watching }
         return .idle
@@ -189,31 +211,50 @@ final class HandMenuModel: ObservableObject {
         // Claude session orbs live in collapsed mode; the fist gesture is
         // theirs there (mouse mode keeps the fist for scrolling).
         if collapsed && !mouseModeEnabled {
-            claudeEngine.update(sessions: claudeSessions.sessions, hand: hand,
+            claudeEngine.update(sessions: claudeSessions.sessions,
+                                presets: replyEngine.presets, hand: hand,
                                 videoSize: frameSize, now: now)
             claudeOrbs = claudeEngine.orbs
+            claudeReplyOrbs = claudeEngine.replyOrbs
             claudeFistProgress = claudeEngine.fistProgress
+            claudeComposing = claudeEngine.composingSessionID != nil
+            claudeGenerating = replyEngine.isGenerating
+
+            // Session picked → start drafting replies on-device.
             if let sid = claudeEngine.selectedSessionID,
                let session = claudeSessions.sessions.first(where: { $0.id == sid }) {
-                claudeSessions.acknowledge(sid)
-                commandToast = "🤖 \(session.name) checked"
-                voice.say("\(session.name) done")
-                commandToastTask?.cancel()
-                commandToastTask = Task {
-                    try? await Task.sleep(nanoseconds: 1_800_000_000)
-                    if !Task.isCancelled { self.commandToast = nil }
-                }
+                beginComposing(for: session)
             }
+
+            // A reply orb was picked → send it into that session's channel.
+            if let reply = claudeEngine.selectedReply {
+                sendReply(reply)
+            }
+
+            // Compose ended (dismissed / idled out) without a pick → stop drafting.
+            if claudeEngine.composingSessionID == nil,
+               (replyEngine.isGenerating || !replyEngine.presets.isEmpty) {
+                replyEngine.cancel()
+            }
+
             statusText = claudeStatus()
             orbs = []
             dismissProgress = 0
+            avatarSummonProgress = 0
+            selectionFingertip = nil
+            selectionDwellProgress = 0
             mouseOrb = nil
             return
         }
-        if !claudeOrbs.isEmpty || claudeFistProgress > 0 {
+        if !claudeOrbs.isEmpty || !claudeReplyOrbs.isEmpty || claudeFistProgress > 0
+            || claudeComposing {
             claudeEngine.reset()
+            replyEngine.cancel()
             claudeOrbs = []
+            claudeReplyOrbs = []
             claudeFistProgress = 0
+            claudeComposing = false
+            claudeGenerating = false
         }
 
         if mouseModeEnabled {
@@ -223,6 +264,9 @@ final class HandMenuModel: ObservableObject {
             mouseControlTrusted = mouseEngine.isTrusted
             orbs = []
             dismissProgress = 0
+            avatarSummonProgress = 0
+            selectionFingertip = nil
+            selectionDwellProgress = 0
             statusText = mouseStatus(hand: hand)
             return
         }
@@ -231,6 +275,9 @@ final class HandMenuModel: ObservableObject {
         engine.update(hand: hand, videoSize: frameSize, now: now)
         orbs = engine.orbs
         dismissProgress = engine.dismissProgress
+        avatarSummonProgress = engine.summonProgress
+        selectionFingertip = engine.fingertip
+        selectionDwellProgress = engine.dwellProgress
 
         if let fired = engine.firedAction {
             launchedName = fired.name
@@ -248,16 +295,78 @@ final class HandMenuModel: ObservableObject {
     private func claudeStatus() -> String {
         let sessions = claudeSessions.sessions
         if sessions.isEmpty { return "No Claude sessions" }
+        // Composing a reply.
+        if claudeComposing {
+            if claudeReplyOrbs.contains(where: { $0.selectProgress > 0.02 }) {
+                return "Hold on a reply to send it"
+            }
+            if claudeReplyOrbs.isEmpty {
+                return "Drafting replies…"
+            }
+            return claudeGenerating
+                ? "Point at a reply — more are still coming"
+                : "Point at the reply to send (or fist to cancel)"
+        }
         let done = sessions.filter(\.isDone).count
         if claudeOrbs.contains(where: { $0.selectProgress > 0.02 }) {
-            return "Hold your finger on an orb to select it"
+            return "Hold your finger on an orb to reply"
         }
         if claudeOrbs.first.map({ $0.center.y < 0.5 }) == true {
-            return "Point at a session orb to check it off"
+            return "Point at a session to draft a reply"
         }
         return done > 0
             ? "\(done) Claude session\(done == 1 ? "" : "s") done — hold a fist to review"
             : "\(sessions.count) Claude session\(sessions.count == 1 ? "" : "s") working"
+    }
+
+    // MARK: Claude reply composing
+
+    /// Begin on-device drafting of replies for a session: gather its diff, then
+    /// kick off the progressive generation rounds.
+    private func beginComposing(for session: ClaudeSession) {
+        guard ReplyPresetEngine.isAvailable else {
+            commandToast = "🤖 On-device model unavailable"
+            scheduleToastDismiss()
+            return
+        }
+        let name = session.name
+        let cwd = session.cwd
+        let lastMessage = session.lastMessage
+        voice.say("Drafting replies for \(name)")
+        Task { [weak self] in
+            let diff = await ReplyPresetEngine.gitDiff(cwd: cwd)
+            guard let self else { return }
+            self.replyEngine.start(context: ComposeContext(
+                sessionName: name, cwd: cwd, lastMessage: lastMessage, diff: diff))
+        }
+    }
+
+    /// Deliver the chosen reply into the session's channel, then wind down.
+    private func sendReply(_ reply: (sessionID: String, text: String)) {
+        let session = claudeSessions.sessions.first(where: { $0.id == reply.sessionID })
+        let name = session?.name ?? "session"
+        let port = session?.port
+        replyEngine.cancel()
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await self.replySender.send(text: reply.text,
+                                                sessionID: reply.sessionID, port: port)
+                self.commandToast = "🤖 Sent to \(name)"
+                self.voice.say("Sent to \(name)")
+            } catch {
+                self.commandToast = "🤖 Couldn't send — \(error.localizedDescription)"
+            }
+            self.scheduleToastDismiss()
+        }
+    }
+
+    private func scheduleToastDismiss() {
+        commandToastTask?.cancel()
+        commandToastTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 2_400_000_000)
+            if !Task.isCancelled { self?.commandToast = nil }
+        }
     }
 
     private func mouseStatus(hand: DetectedHand?) -> String {
@@ -273,13 +382,14 @@ final class HandMenuModel: ObservableObject {
     private func status(for state: OrbMenuEngine.State, hand: DetectedHand?) -> String {
         switch state {
         case .hidden:
+            if avatarSummonProgress > 0.02 { return "Keep touching Palmo..." }
             return hand == nil
                 ? "Show a hand to the camera"
-                : "Hold your palm up, fingers spread, to summon the menu"
+                : "Touch Palmo for 1 second to summon the menu"
         case .summoning:
             return "Summoning..."
         case .open:
-            return "Pinch an orb to open the app. Hold a fist for 1 second to dismiss."
+            return "Point your index finger at an orb and hold 1 second to open it. Fist to dismiss."
         case .launching(let action, _, _):
             return "Opening \(action.name)"
         case .closing:

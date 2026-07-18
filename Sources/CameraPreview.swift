@@ -21,9 +21,10 @@ struct CameraPreview: NSViewRepresentable {
     final class PreviewView: NSView {
         let previewLayer = AVCaptureVideoPreviewLayer()
 
-        /// Mirroring is done with a layer flip instead of the connection's
-        /// isVideoMirrored: the connection can be nil when the view is first
-        /// built (session still configuring) and never gets re-applied.
+        /// Mirroring is a horizontal flip of `previewLayer`. Note it must be a
+        /// SUBLAYER (not the view's backing layer): AppKit manages a backing
+        /// layer's geometry and resets its affineTransform on every layout, so
+        /// the flip would silently never apply.
         var mirrored = false {
             didSet { applyMirror() }
         }
@@ -38,17 +39,17 @@ struct CameraPreview: NSViewRepresentable {
         override init(frame frameRect: NSRect) {
             super.init(frame: frameRect)
             wantsLayer = true
-            layer = previewLayer
+            layer = CALayer()
+            layer?.addSublayer(previewLayer)
         }
         required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
         override func layout() {
             super.layout()
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
             previewLayer.frame = bounds
-            // Re-apply the mirror on every layout pass. The transform set during
-            // updateNSView can be applied before the preview layer/connection is
-            // ready (see note above) and get lost; layout runs once the view has
-            // real bounds and after the session comes up, keeping the visual flip
-            // in sync with the pipeline's coordinate flip at launch.
+            CATransaction.commit()
+            // Re-assert the flip after resizing the sublayer's frame.
             applyMirror()
         }
     }

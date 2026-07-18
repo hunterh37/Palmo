@@ -112,13 +112,18 @@ struct OrbSceneView: NSViewRepresentable {
             let (r, g, b) = orb.action?.color ?? (0.55, 0.75, 1.0)
             let color = NSColor(calibratedRed: r, green: g, blue: b, alpha: 1)
 
+            // Dwell "charges" the orb: the glow ramps and the core swells as
+            // the fingertip rests on it, then it fires at full fill.
+            let dwell = max(0, min(orb.dwellProgress, 1))
+
             let shell = node.geometry?.firstMaterial ?? SCNMaterial()
             shell.lightingModel = .physicallyBased
             shell.diffuse.contents = color.withAlphaComponent(0.42)
             shell.metalness.contents = 0.15
             shell.roughness.contents = 0.12
             shell.transparency = orb.isCommand ? 0.92 : 0.85
-            shell.emission.contents = color.withAlphaComponent(orb.highlighted ? 0.95 : 0.30)
+            let baseEmission: CGFloat = orb.highlighted ? 0.95 : 0.30
+            shell.emission.contents = color.withAlphaComponent(min(baseEmission + dwell * 0.6, 1.0))
             shell.fresnelExponent = 1.6
             shell.isDoubleSided = false
             node.geometry?.firstMaterial = shell
@@ -127,8 +132,13 @@ struct OrbSceneView: NSViewRepresentable {
                 let m = core.geometry?.firstMaterial ?? SCNMaterial()
                 m.lightingModel = .constant
                 m.diffuse.contents = NSColor.white.withAlphaComponent(0.0)
-                m.emission.contents = color.withAlphaComponent(orb.highlighted ? 1.0 : 0.65)
+                let coreEmission: CGFloat = orb.highlighted ? 1.0 : 0.65
+                m.emission.contents = (dwell > 0 ? NSColor.white : color)
+                    .withAlphaComponent(min(coreEmission + dwell * 0.35, 1.0))
                 m.transparency = 0.75
+                // Swell the core from 55% to ~95% of the shell as it charges.
+                let coreScale = 1.0 + dwell * 0.72
+                core.scale = SCNVector3(coreScale, coreScale, coreScale)
                 core.geometry?.firstMaterial = m
             }
         }
