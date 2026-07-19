@@ -1,5 +1,47 @@
+# ---- macOS ----
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# ---- Xcode / Swift ----
 build/
 dist/
 DerivedData/
 *.xcuserstate
-.DS_Store
+*.xcuserdatad
+xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+Generated/
+.swiftpm/
+.build/
+Package.resolved
+
+# Xcode project: ignore user state, keep shared project files
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# ---- Node (palmo-channel) ----
+node_modules/
+palmo-channel/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm/
+
+# ---- Env / secrets ----
+.env
+.env.*
+!.env.example
+
+# ---- Editor / misc ----
+*.log
+*.tmp
+.idea/
+.vscode/

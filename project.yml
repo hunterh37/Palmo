@@ -30,3 +30,27 @@ targets:
         CODE_SIGNING_ALLOWED: YES
         CODE_SIGN_IDENTITY: "-"
         ENABLE_HARDENED_RUNTIME: YES
+
+  HandOrbMenuTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests
+      - path: Sources
+        excludes:
+          - HandOrbMenuApp.swift
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.dicyanin.handorbmenu.tests
+        CODE_SIGN_IDENTITY: "-"
+
+schemes:
+  HandOrbMenu:
+    build:
+      targets:
+        HandOrbMenu: all
+        HandOrbMenuTests: [test]
+    test:
+      targets:
+        - HandOrbMenuTests
