@@ -196,9 +196,9 @@ final class OrbMenuEngine {
     }
 
     // Layout tuning (aspect-corrected units: fractions of frame height).
-    private let commandRadius: CGFloat = 0.045
-    private let orbRadius: CGFloat = 0.058
-    private let fanRadius: CGFloat = 0.24
+    private let commandRadius: CGFloat = 0.036
+    private let orbRadius: CGFloat = 0.042
+    private let fanRadius: CGFloat = 0.28
     private let hoverAbovePalm: CGFloat = 0.20
     private let summonDuration: CFTimeInterval = 0.75
     private let fanStagger: CFTimeInterval = 0.06

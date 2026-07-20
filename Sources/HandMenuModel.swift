@@ -48,8 +48,26 @@ final class HandMenuModel: ObservableObject {
     /// Collapse mode: shrinks the main window into a small always-on-top
     /// overlay pinned to the top-right corner of the screen.
     @Published var collapsed: Bool = false {
-        didSet { CollapseWindowStyler.shared.setCollapsed(collapsed) }
+        didSet {
+            CollapseWindowStyler.shared.setCollapsed(collapsed)
+            if !collapsed {
+                // Leaving notch mode: cancel any pending retract and reset.
+                notchCollapseWork?.cancel()
+                notchCollapseWork = nil
+                notchExpanded = false
+            }
+        }
     }
+
+    /// Notch mode is expanded (webcam panel dropped down) while a hand is present;
+    /// it auto-retracts a short delay after the last hand disappears.
+    @Published var notchExpanded: Bool = false {
+        didSet { CollapseWindowStyler.shared.setExpanded(notchExpanded) }
+    }
+    /// Pending auto-collapse of the notch panel after hands leave the frame.
+    private var notchCollapseWork: DispatchWorkItem?
+    /// How long the panel stays down after the last hand disappears.
+    private let notchCollapseDelay: TimeInterval = 1.5
 
     @Published var mouseControlTrusted: Bool = true
 
@@ -315,6 +333,25 @@ final class HandMenuModel: ObservableObject {
         self.hands = hands
         if frameSize != videoSize { videoSize = frameSize }
         fpsCounter += 1
+
+        // Notch mode: any detected hand drops the panel down; when hands leave,
+        // debounce a retract so brief tracking dropouts don't flicker it shut.
+        if collapsed {
+            if !hands.isEmpty {
+                notchCollapseWork?.cancel()
+                notchCollapseWork = nil
+                if !notchExpanded { notchExpanded = true }
+            } else if notchExpanded, notchCollapseWork == nil {
+                let work = DispatchWorkItem { [weak self] in
+                    guard let self, self.collapsed else { return }
+                    self.notchExpanded = false
+                    self.notchCollapseWork = nil
+                }
+                notchCollapseWork = work
+                DispatchQueue.main.asyncAfter(
+                    deadline: .now() + notchCollapseDelay, execute: work)
+            }
+        }
 
         // Stats: hands-free control time + air commands.
         let now0 = CACurrentMediaTime()

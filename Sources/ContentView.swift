@@ -5,8 +5,6 @@ struct ContentView: View {
     @ObservedObject private var settings = AppSettings.shared
     @ObservedObject private var stats = StatsStore.shared
     @Environment(\.openWindow) private var openWindow
-    /// 0→1 dream fade-in progress when entering collapsed mode.
-    @State private var dreamReveal: CGFloat = 0
 
     /// True while any tracked hand shows an open raised palm.
     private var handRaised: Bool {
@@ -22,14 +20,6 @@ struct ContentView: View {
             }
         }
         .background(WindowAccessor())
-        .onChange(of: model.collapsed) { _, collapsed in
-            if collapsed {
-                dreamReveal = 0
-                withAnimation(.easeOut(duration: 1.4)) { dreamReveal = 1 }
-            } else {
-                dreamReveal = 0
-            }
-        }
     }
 
     // MARK: - Dashboard (the useful main window)
@@ -384,10 +374,17 @@ struct ContentView: View {
         .help(help)
     }
 
-    // MARK: - Collapsed overlay mode (unchanged behavior)
+    // MARK: - Notch mode (drops the webcam view down from the top edge)
 
     private var collapsedRoot: some View {
         GeometryReader { geo in
+            // The full-size webcam panel, clipped to a bottom-rounded "notch"
+            // shape. It's anchored to the top and its visible height animates
+            // from 0 (hidden) to full whenever a hand is detected.
+            let notchShape = UnevenRoundedRectangle(
+                bottomLeadingRadius: 22, bottomTrailingRadius: 22,
+                style: .continuous)
+
             ZStack {
                 if model.cameraAuthorized {
                     CameraPreview(session: model.session, mirrored: model.mirrored)
@@ -410,25 +407,24 @@ struct ContentView: View {
                     collapsedBar
                 }
                 .animation(.spring(duration: 0.3), value: model.commandToast)
-
-                // Palmo peeks in when a hand is raised, even while collapsed.
-                PalmoAvatarView(mood: model.buddyMood, gaze: model.buddyGaze,
-                                waving: handRaised)
-                    .frame(width: 78, height: 78)
-                    .opacity(handRaised ? 1 : 0)
-                    .scaleEffect(handRaised ? 1 : 0.75, anchor: .bottomLeading)
-                    .animation(.spring(duration: 0.55, bounce: 0.35), value: handRaised)
-                    .allowsHitTesting(false)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity,
-                           alignment: .bottomLeading)
-                    .padding(.leading, 10)
-                    .padding(.bottom, 34)
             }
-            .overlay { DreamGlow().opacity(Double(dreamReveal)) }
-            // Escape hatch: the expand button sits near the feathered edge and
-            // the window is movable-by-background, so a double-click anywhere
-            // reliably restores the full window even if the button is hard to hit.
-            .contentShape(Rectangle())
+            .frame(width: geo.size.width, height: geo.size.height)
+            .background(Color.black)
+            .clipShape(notchShape)
+            .overlay {
+                notchShape.strokeBorder(.white.opacity(0.10), lineWidth: 1)
+            }
+            .shadow(color: .black.opacity(0.35), radius: 12, y: 6)
+            // Grow downward: pin to the top and reveal the height. The inner
+            // content keeps its full size and is clipped by the shrinking frame.
+            .frame(height: model.notchExpanded ? geo.size.height : 0,
+                   alignment: .top)
+            .clipped()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .animation(.spring(duration: 0.5, bounce: 0.2),
+                       value: model.notchExpanded)
+            // Escape hatch: double-click the visible panel to leave notch mode.
+            .contentShape(notchShape)
             .onTapGesture(count: 2) { model.collapsed = false }
         }
         .frame(minWidth: CollapseWindowStyler.collapsedSize.width,
@@ -438,8 +434,6 @@ struct ContentView: View {
     /// Minimal chrome shown while in collapsed overlay mode.
     private var collapsedBar: some View {
         HStack(spacing: 10) {
-            Label(model.statusText, systemImage: "hand.raised")
-                .lineLimit(1)
             Spacer()
             Button {
                 model.collapsed = false
@@ -456,14 +450,22 @@ struct ContentView: View {
         }
         .font(.system(size: 10, design: .monospaced))
         .foregroundStyle(.white.opacity(0.85))
-        .padding(.leading, 12)
         .padding(.trailing, 6)
         .padding(.vertical, 6)
-        .background(.ultraThinMaterial, in: Capsule())
         // Sit above the ~30pt feathered/blurred edge so the control stays
         // visible and hittable rather than fading into the dream mask.
         .padding(.bottom, 40)
         .padding(.horizontal, 24)
+        // The session-status text is pushed off-screen along the bottom edge
+        // so it never overlaps the orb menu; it lives just below the frame.
+        .overlay(alignment: .bottom) {
+            Text(model.statusText)
+                .font(.system(size: 10, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.85))
+                .lineLimit(1)
+                .fixedSize()
+                .offset(y: 80)
+        }
     }
 
     private func launchToast(_ name: String) -> some View {

@@ -1,24 +1,28 @@
 import SwiftUI
 import AppKit
-import CoreImage
-import CoreImage.CIFilterBuiltins
 
-/// Applies "collapse mode" to the main window: a small, always-on-top,
-/// borderless-feeling overlay pinned to the top-right corner of the screen.
+/// Applies "notch mode" to the main window: an always-on-top, borderless-feeling
+/// overlay pinned flush to the top-center edge of the screen. The window is sized
+/// to the fully-expanded panel; SwiftUI animates the webcam view dropping down from
+/// the top edge (Dynamic-Island style), while this styler hides the window
+/// (click-through + alpha 0) whenever the panel is fully retracted.
 /// Restores the previous frame/level when un-collapsed.
 @MainActor
 final class CollapseWindowStyler {
     static let shared = CollapseWindowStyler()
 
-    /// Size of the collapsed overlay.
-    static let collapsedSize = NSSize(width: 340, height: 210)
-    /// Margin from the screen's visible-frame edges.
+    /// Size of the notch overlay window (matches the fully-expanded panel).
+    static let collapsedSize = NSSize(width: 480, height: 320)
+    /// Margin used only to clamp the window off the very screen edges if needed.
     static let margin: CGFloat = 12
 
     private weak var window: NSWindow?
     private var savedFrame: NSRect?
     private var savedStyleMask: NSWindow.StyleMask?
     private var isCollapsed = false
+    /// Whether the panel is currently expanded (a hand is present). Drives
+    /// click-through + window alpha so a retracted notch never steals clicks.
+    private var isExpanded = false
 
     /// Called from a `WindowAccessor` once the SwiftUI content lands in a window.
     func attach(_ window: NSWindow) {
@@ -37,6 +41,23 @@ final class CollapseWindowStyler {
         guard collapsed != isCollapsed else { return }
         isCollapsed = collapsed
         apply(collapsed: collapsed, animated: true)
+    }
+
+    /// Toggles the window between "hidden notch" (no hand) and "visible panel"
+    /// (hand present). The height animation itself lives in SwiftUI; here we only
+    /// hide the window's alpha and make it click-through when fully retracted so
+    /// the transparent top-center band never intercepts clicks meant for apps
+    /// underneath.
+    func setExpanded(_ expanded: Bool) {
+        guard expanded != isExpanded else { return }
+        isExpanded = expanded
+        guard isCollapsed, let window else { return }
+        window.ignoresMouseEvents = !expanded
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = expanded ? 0.35 : 0.5
+            ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            window.animator().alphaValue = expanded ? 1 : 0
+        }
     }
 
     private func apply(collapsed: Bool, animated: Bool) {
@@ -64,17 +85,16 @@ final class CollapseWindowStyler {
             window.hasShadow = false
 
             window.setFrame(collapsedFrame(for: window), display: true, animate: animated)
-            // Wait for the frame animation so the mask is sized to the final
-            // content bounds.
-            let delay = animated ? 0.30 : 0.0
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                guard let self, self.isCollapsed else { return }
-                self.applyFeatherMask(true)
-            }
-            dreamFadeIn()
+            // Start fully hidden + click-through; a detected hand flips this via
+            // setExpanded(). SwiftUI clips the panel to a bottom-rounded notch.
+            isExpanded = false
+            window.ignoresMouseEvents = true
+            window.alphaValue = 0
         } else {
-            applyFeatherMask(false)
             window.level = .normal
+            isExpanded = false
+            window.ignoresMouseEvents = false
+            window.alphaValue = 1
             window.collectionBehavior = []
             if let savedStyleMask { window.styleMask = savedStyleMask }
             window.titlebarAppearsTransparent = false
@@ -101,82 +121,16 @@ final class CollapseWindowStyler {
         }
     }
 
-    // MARK: - Dream feather
-
-    /// Masks the content view's layer with a pre-blurred rounded rect, so the
-    /// video feathers out into transparency, then adds a slow "breathing"
-    /// scale animation to the mask so the edge drifts like a dream.
-    private func applyFeatherMask(_ enable: Bool) {
-        guard let contentView = window?.contentView else { return }
-        contentView.wantsLayer = true
-        guard let layer = contentView.layer else { return }
-        if enable {
-            let size = contentView.bounds.size
-            let mask = CALayer()
-            mask.contents = Self.featherImage(size: size)
-            mask.frame = CGRect(origin: .zero, size: size)
-            mask.anchorPoint = CGPoint(x: 0.5, y: 0.5)
-            mask.position = CGPoint(x: size.width / 2, y: size.height / 2)
-
-            let breathe = CABasicAnimation(keyPath: "transform.scale")
-            breathe.fromValue = 1.0
-            breathe.toValue = 1.045
-            breathe.duration = 2.6
-            breathe.autoreverses = true
-            breathe.repeatCount = .infinity
-            breathe.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-            mask.add(breathe, forKey: "breathe")
-
-            layer.mask = mask
-        } else {
-            layer.mask = nil
-        }
-    }
-
-    /// Fades the whole window in from nothing, like the overlay is
-    /// materializing out of the corner.
-    private func dreamFadeIn() {
-        guard let window else { return }
-        window.alphaValue = 0
-        NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = 1.4
-            ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            window.animator().alphaValue = 1
-        }
-    }
-
-    /// White rounded rect, gaussian-blurred, rendered once as the alpha mask.
-    private static func featherImage(size: CGSize) -> CGImage? {
-        let scale: CGFloat = 2
-        let w = Int(size.width * scale), h = Int(size.height * scale)
-        guard let ctx = CGContext(
-            data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
-            space: CGColorSpaceCreateDeviceRGB(),
-            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
-        let inset: CGFloat = 30 * scale
-        let rect = CGRect(x: 0, y: 0, width: CGFloat(w), height: CGFloat(h))
-            .insetBy(dx: inset, dy: inset)
-        ctx.setFillColor(CGColor(red: 1, green: 1, blue: 1, alpha: 1))
-        ctx.addPath(CGPath(roundedRect: rect, cornerWidth: 40 * scale,
-                           cornerHeight: 40 * scale, transform: nil))
-        ctx.fillPath()
-        guard let hard = ctx.makeImage() else { return nil }
-
-        let blurred = CIImage(cgImage: hard)
-            .clampedToExtent()
-            .applyingGaussianBlur(sigma: 12 * scale)
-        return CIContext().createCGImage(
-            blurred, from: CGRect(x: 0, y: 0, width: CGFloat(w), height: CGFloat(h)))
-    }
-
+    /// Pins the notch window flush to the top-center of the active screen's
+    /// visible frame (just under the menu bar), so the panel drops straight down.
     private func collapsedFrame(for window: NSWindow) -> NSRect {
         let screen = window.screen ?? NSScreen.main
         let visible = screen?.visibleFrame
             ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
         let size = Self.collapsedSize
         return NSRect(
-            x: visible.maxX - size.width - Self.margin,
-            y: visible.maxY - size.height - Self.margin,
+            x: visible.midX - size.width / 2,
+            y: visible.maxY - size.height,
             width: size.width, height: size.height)
     }
 

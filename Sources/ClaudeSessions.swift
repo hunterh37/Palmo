@@ -481,11 +481,21 @@ final class ClaudeOrbEngine {
 
     /// Center of orb `index` at raise `progress` (0 docked, 1 raised).
     private func orbCenter(index: Int, count: Int, progress: CGFloat) -> CGPoint {
-        // Evenly spaced row, centered. Spacing in aspect-corrected units,
-        // converted back to normalized x.
-        let spacing: CGFloat = (raisedRadius * 3.2) / aspect
-        let x = 0.5 + (CGFloat(index) - CGFloat(count - 1) / 2) * spacing
-        let y = dockedY + (raisedY - dockedY) * progress
+        // Lay the session orbs out in up to two centered rows so the name
+        // labels beneath them stop colliding when there are several sessions.
+        // Spacing is in aspect-corrected units, converted back to normalized x.
+        let rows = count > 3 ? 2 : 1
+        let perRow = Int(ceil(Double(count) / Double(rows)))
+        let row = index / perRow
+        let col = index % perRow
+        let itemsInRow = min(perRow, count - row * perRow)
+        let spacing: CGFloat = (raisedRadius * 3.4) / aspect
+        let x = 0.5 + (CGFloat(col) - CGFloat(itemsInRow - 1) / 2) * spacing
+        // Center the whole grid on the animated docked→raised Y.
+        let rowGap: CGFloat = raisedRadius * 3.6
+        let centerY = dockedY + (raisedY - dockedY) * progress
+        let firstRowY = centerY - CGFloat(rows - 1) * rowGap / 2
+        let y = firstRowY + CGFloat(row) * rowGap
         return CGPoint(x: x, y: y)
     }
 
@@ -691,11 +701,14 @@ struct ClaudeOrbOverlay: View {
                     .frame(width: r * 2.6, height: r * 2.6)
             }
             Text(orb.name)
-                .font(.system(size: max(r * 0.45, 8), weight: .bold,
+                .font(.system(size: max(r * 0.30, 6), weight: .semibold,
                               design: .rounded))
+                .lineLimit(1)
+                .truncationMode(.tail)
                 .foregroundStyle(.white)
                 .shadow(color: .black.opacity(0.9), radius: 2)
-                .offset(y: r * 1.9)
+                .frame(width: r * 3.2)
+                .offset(y: r * 1.6)
         }
         .position(c)
     }
