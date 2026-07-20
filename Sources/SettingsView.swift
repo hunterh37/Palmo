@@ -13,6 +13,7 @@ struct SettingsView: View {
             orbMenu.tabItem { Label("Orb Menu", systemImage: "circle.hexagongrid") }
             assistant.tabItem { Label("Assistant", systemImage: "sparkles") }
             ClaudeCodeSettings().tabItem { Label("Claude Code", systemImage: "terminal") }
+            TicketSettings().tabItem { Label("Tickets", systemImage: "lightbulb") }
             about.tabItem { Label("About", systemImage: "info.circle") }
         }
         .frame(width: 440, height: 360)
@@ -156,6 +157,68 @@ private struct ClaudeCodeSettings: View {
         } catch {
             self.error = "Install failed: \(error.localizedDescription)"
         }
+    }
+}
+
+/// Ticket suggestions: OpenRouter key/model + the auto-registered project list.
+private struct TicketSettings: View {
+    @EnvironmentObject private var model: HandMenuModel
+
+    var body: some View {
+        TicketSettingsForm(registry: model.projects)
+    }
+}
+
+private struct TicketSettingsForm: View {
+    @ObservedObject private var settings = AppSettings.shared
+    @ObservedObject var registry: ProjectRegistry
+
+    var body: some View {
+        Form {
+            Section("Ticket suggestions") {
+                Toggle("Suggest tickets to grab", isOn: $settings.ticketSuggestionsEnabled)
+                Text("After a Claude Code session finishes (or a new commit lands), \(Brand.name) proposes tickets to work on next. Pinch one out of the air and drop it on the ring to start Claude on it in that project.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            if settings.ticketSuggestionsEnabled {
+                Section("OpenRouter") {
+                    SecureField("API key", text: $settings.openRouterKey)
+                    TextField("Model", text: $settings.openRouterModel)
+                    Text("Suggestions are generated via OpenRouter using recent commits, the working tree, and any tickets/ folder in the repo. Stored locally.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Section("Projects") {
+                    if registry.projects.isEmpty {
+                        Text("No projects yet — they're added automatically whenever a Claude Code session runs.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    ForEach(registry.projects) { project in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(project.name)
+                                Text(project.cwd)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                            }
+                            Spacer()
+                            Button {
+                                registry.remove(cwd: project.cwd)
+                            } label: {
+                                Image(systemName: "minus.circle.fill")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
     }
 }
 

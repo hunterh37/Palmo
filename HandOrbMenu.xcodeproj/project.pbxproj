@@ -9,24 +9,30 @@
 /* Begin PBXBuildFile section */
 		00F80B8F956790A1EAEC1CC9 /* CollapseWindowStyler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE728A3DE1B49C5AF7AA562 /* CollapseWindowStyler.swift */; };
 		0679EA92E5445E9DD2E82DDA /* OrbSceneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 852497A9FD56E812D22BA539 /* OrbSceneView.swift */; };
+		0B4349D0A4008E1F7E707EDB /* TicketEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A699BFA498CE14B0F16D8777 /* TicketEngine.swift */; };
 		0BB20B0BBA81DA2819D42F10 /* GestureCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EDDFBA4895D7A236C852CB2 /* GestureCommands.swift */; };
+		1141C66072693411564AF032 /* ProjectRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B327C51D44322251A1A61010 /* ProjectRegistryTests.swift */; };
 		12DAFC94A2C7A184B4CFAFFA /* ReplyPresetEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECCBE81BAE0BA8103C781DFC /* ReplyPresetEngineTests.swift */; };
 		12E3B83BE340B7929B206979 /* IconExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 758133192CBD8094B2FFD54B /* IconExporter.swift */; };
+		164D751356A5BA3D54E6A240 /* TicketOrbEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43174E3D687E9D1A338320B7 /* TicketOrbEngineTests.swift */; };
 		1BEE74918080FE126940BB00 /* TestHands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2299A9619AA6A0A8435569A9 /* TestHands.swift */; };
 		1FE5534691FA7937E11D28AA /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 0F8817A1975F26F73C481EF2 /* AppIcon.icns */; };
 		21D081E0BE9DD8FBDC673358 /* DetectedHandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E6D54823E5789EA80D12618 /* DetectedHandTests.swift */; };
 		2DCD0E0C6D1C341C26D58AE0 /* AssistantChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE1481083683C5D3671F9C18 /* AssistantChatView.swift */; };
 		3420205770E024161C305D17 /* HandOrbMenuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E150B563944B2A958EEC7328 /* HandOrbMenuApp.swift */; };
 		3574002D54710BA0C8FB3AEE /* OrbSceneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 852497A9FD56E812D22BA539 /* OrbSceneView.swift */; };
+		37533EE45F195C5AA7BDC894 /* TicketOrbEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F267C7C45B249ED897AAA79 /* TicketOrbEngine.swift */; };
 		3AAEC0339B130BA38075246B /* ClaudeSessions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 898BA1EE937653C260057E00 /* ClaudeSessions.swift */; };
 		3AE532D1D19CA3CA22108F20 /* AssistantEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06B1252AEFF2A62517A0C261 /* AssistantEngine.swift */; };
 		3F7FD8D0988F867B70EC1129 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F8EDE33192412549ECDF95 /* ContentView.swift */; };
 		4E66BAECDC4509DD57598CD1 /* IconExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 758133192CBD8094B2FFD54B /* IconExporter.swift */; };
+		51510E144948E6F6287A78DD /* ProjectRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B68C7DCED016DC7F01CF5E3 /* ProjectRegistry.swift */; };
 		556D2C3ABE83E6E1B5AD3D69 /* HandMenuModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 286965547D3BDD08BDDEC4C0 /* HandMenuModel.swift */; };
 		56B7B9CA81A3F874F24E6828 /* MenuActionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E059C85B73E66FF181913E4 /* MenuActionTests.swift */; };
 		57D76CC3505A635E9AB0912A /* AssistantChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE1481083683C5D3671F9C18 /* AssistantChatView.swift */; };
 		5A2B604BFFD5791AF15E0876 /* CameraPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBAFAF276195BB144030116E /* CameraPreview.swift */; };
 		5A3F5361D4AA93F49A34DA6E /* ClaudeReplySender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8ED9E84D04FB187399C1451A /* ClaudeReplySender.swift */; };
+		5B971F85151307B319FBECD4 /* OpenRouterClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6AD5B1488282DD46CBC6DAA /* OpenRouterClient.swift */; };
 		5DB648F2930E554085DD3232 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C21564DB49A2E73B9CBFA07 /* OnboardingView.swift */; };
 		6287F1E2DD8A9BBBAEB006E8 /* MouseControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 950D4B1A188FDDD05BA8723C /* MouseControl.swift */; };
 		63B31BA2A6A7FC44AC6B12DA /* HandVisionPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C0D434D30EC1C13EC1EA86 /* HandVisionPipeline.swift */; };
@@ -34,6 +40,7 @@
 		67A763247030FD6D9C55F656 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16AF9509850A95E201E331E7 /* MenuBarView.swift */; };
 		6A16F40CA3C0413B183D32C6 /* DreamEdge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 046C4A1F0B88EF29756891EE /* DreamEdge.swift */; };
 		6CFCE33FC22370347BEF08CC /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8E8AABFC2CBFE2569618D04 /* AppSettings.swift */; };
+		6DA656EA815DC6D366B9CF93 /* TicketDispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B3AEC2E205E05484A6A313 /* TicketDispatcher.swift */; };
 		6DB2A3BB33D2FBFC6DAA849B /* GestureCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EDDFBA4895D7A236C852CB2 /* GestureCommands.swift */; };
 		6E11CE5786632997706ED865 /* ClaudeReplySenderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAB2CBF614A102322145CFAF /* ClaudeReplySenderTests.swift */; };
 		7133F3CEF6239BA62E3F4D55 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09FD6B6226F649B9072CD88D /* SettingsView.swift */; };
@@ -44,6 +51,7 @@
 		8194914CB251D908E0808A37 /* PalmoAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0D31D7A3CE0C0589CB97BC /* PalmoAvatarView.swift */; };
 		8613AE55B526C48F62369C79 /* ClaudeOrbEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111B01551E9EFD07C65D47A3 /* ClaudeOrbEngineTests.swift */; };
 		86669DAC7B5B2157A7BE73CF /* Branding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F0A98DABCFFA6924308CEC1 /* Branding.swift */; };
+		9545A7106773370104911BF6 /* OpenRouterClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6AD5B1488282DD46CBC6DAA /* OpenRouterClient.swift */; };
 		9632A5923B7A84D061F85436 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16AF9509850A95E201E331E7 /* MenuBarView.swift */; };
 		9C3608775E48A11B8325C358 /* DreamEdge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 046C4A1F0B88EF29756891EE /* DreamEdge.swift */; };
 		A239BA5EEE0A151DB2029241 /* OrbMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9809169F369D55D903E7DA2B /* OrbMenu.swift */; };
@@ -51,12 +59,17 @@
 		B6796C3A5F441712A105275E /* ReplyPresetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6073C8D7435AEA733E814BF /* ReplyPresetEngine.swift */; };
 		B6B8D96FC6547DA6F9548884 /* HandMenuModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 286965547D3BDD08BDDEC4C0 /* HandMenuModel.swift */; };
 		B73B7B2C90B58E8C636371EF /* OrbMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9809169F369D55D903E7DA2B /* OrbMenu.swift */; };
+		B7661162E2E8B2109694680D /* TicketEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A699BFA498CE14B0F16D8777 /* TicketEngine.swift */; };
 		B983424C5EB561D62B1CE4E1 /* HandVisionPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C0D434D30EC1C13EC1EA86 /* HandVisionPipeline.swift */; };
 		B9AFAE715B0B27C2C371EE77 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09FD6B6226F649B9072CD88D /* SettingsView.swift */; };
+		BC6D1F8CA6BFC61D653BFDEA /* TicketDispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B3AEC2E205E05484A6A313 /* TicketDispatcher.swift */; };
 		BC9DCA547E6BAB00241764D5 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8E8AABFC2CBFE2569618D04 /* AppSettings.swift */; };
 		BEDB0C179472ECAE01950E64 /* CollapseWindowStyler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE728A3DE1B49C5AF7AA562 /* CollapseWindowStyler.swift */; };
+		C0FFD800BE5744BE1ED96E0A /* TicketEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06E4D23EDB9AB8FE0F8419C4 /* TicketEngineTests.swift */; };
 		C4C088D55CE574453D023BFD /* MouseControlEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 332B038F6D4579399ECC8076 /* MouseControlEngineTests.swift */; };
 		D29A25DF3F36D6761CA4B8FF /* ClaudeSessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D2428A57C7D4C1EA57B10D9 /* ClaudeSessionStoreTests.swift */; };
+		D324A8EB1A1FF04F991116E6 /* ProjectRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B68C7DCED016DC7F01CF5E3 /* ProjectRegistry.swift */; };
+		DDFA7DA1B4FC0642526FE59C /* TicketOrbEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F267C7C45B249ED897AAA79 /* TicketOrbEngine.swift */; };
 		E79C3F6B7AE00F1FEF46E607 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F8EDE33192412549ECDF95 /* ContentView.swift */; };
 		E8B7F479600F0BA8DFA3F042 /* BuddyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00258BACB14EBAF011ADF64C /* BuddyView.swift */; };
 		EA55849D3FEEEB536E69A75C /* BuddyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00258BACB14EBAF011ADF64C /* BuddyView.swift */; };
@@ -72,8 +85,11 @@
 		0383009943148A5FF6D4032A /* HandOrbMenuTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HandOrbMenuTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		046C4A1F0B88EF29756891EE /* DreamEdge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DreamEdge.swift; sourceTree = "<group>"; };
 		06B1252AEFF2A62517A0C261 /* AssistantEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantEngine.swift; sourceTree = "<group>"; };
+		06E4D23EDB9AB8FE0F8419C4 /* TicketEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketEngineTests.swift; sourceTree = "<group>"; };
 		09FD6B6226F649B9072CD88D /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		0F267C7C45B249ED897AAA79 /* TicketOrbEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketOrbEngine.swift; sourceTree = "<group>"; };
 		0F8817A1975F26F73C481EF2 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
+		10B3AEC2E205E05484A6A313 /* TicketDispatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketDispatcher.swift; sourceTree = "<group>"; };
 		10F8EDE33192412549ECDF95 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		111B01551E9EFD07C65D47A3 /* ClaudeOrbEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeOrbEngineTests.swift; sourceTree = "<group>"; };
 		16AF9509850A95E201E331E7 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
@@ -81,9 +97,11 @@
 		286965547D3BDD08BDDEC4C0 /* HandMenuModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandMenuModel.swift; sourceTree = "<group>"; };
 		2FE728A3DE1B49C5AF7AA562 /* CollapseWindowStyler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollapseWindowStyler.swift; sourceTree = "<group>"; };
 		332B038F6D4579399ECC8076 /* MouseControlEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseControlEngineTests.swift; sourceTree = "<group>"; };
+		3B68C7DCED016DC7F01CF5E3 /* ProjectRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectRegistry.swift; sourceTree = "<group>"; };
 		3E059C85B73E66FF181913E4 /* MenuActionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuActionTests.swift; sourceTree = "<group>"; };
 		3E6D54823E5789EA80D12618 /* DetectedHandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetectedHandTests.swift; sourceTree = "<group>"; };
 		3EDDFBA4895D7A236C852CB2 /* GestureCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureCommands.swift; sourceTree = "<group>"; };
+		43174E3D687E9D1A338320B7 /* TicketOrbEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketOrbEngineTests.swift; sourceTree = "<group>"; };
 		4C21564DB49A2E73B9CBFA07 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		6F0A98DABCFFA6924308CEC1 /* Branding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Branding.swift; sourceTree = "<group>"; };
 		758133192CBD8094B2FFD54B /* IconExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconExporter.swift; sourceTree = "<group>"; };
@@ -96,11 +114,14 @@
 		9809169F369D55D903E7DA2B /* OrbMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbMenu.swift; sourceTree = "<group>"; };
 		9D2428A57C7D4C1EA57B10D9 /* ClaudeSessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeSessionStoreTests.swift; sourceTree = "<group>"; };
 		9F18615AC0904467F9DE42D1 /* OrbMenuEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbMenuEngineTests.swift; sourceTree = "<group>"; };
+		A699BFA498CE14B0F16D8777 /* TicketEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicketEngine.swift; sourceTree = "<group>"; };
 		AC0D31D7A3CE0C0589CB97BC /* PalmoAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PalmoAvatarView.swift; sourceTree = "<group>"; };
+		B327C51D44322251A1A61010 /* ProjectRegistryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectRegistryTests.swift; sourceTree = "<group>"; };
 		B8E8AABFC2CBFE2569618D04 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		BAB2CBF614A102322145CFAF /* ClaudeReplySenderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeReplySenderTests.swift; sourceTree = "<group>"; };
 		CBAFAF276195BB144030116E /* CameraPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreview.swift; sourceTree = "<group>"; };
 		D6073C8D7435AEA733E814BF /* ReplyPresetEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplyPresetEngine.swift; sourceTree = "<group>"; };
+		D6AD5B1488282DD46CBC6DAA /* OpenRouterClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenRouterClient.swift; sourceTree = "<group>"; };
 		DE1481083683C5D3671F9C18 /* AssistantChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantChatView.swift; sourceTree = "<group>"; };
 		E150B563944B2A958EEC7328 /* HandOrbMenuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandOrbMenuApp.swift; sourceTree = "<group>"; };
 		ECCBE81BAE0BA8103C781DFC /* ReplyPresetEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplyPresetEngineTests.swift; sourceTree = "<group>"; };
@@ -138,11 +159,16 @@
 				16AF9509850A95E201E331E7 /* MenuBarView.swift */,
 				950D4B1A188FDDD05BA8723C /* MouseControl.swift */,
 				4C21564DB49A2E73B9CBFA07 /* OnboardingView.swift */,
+				D6AD5B1488282DD46CBC6DAA /* OpenRouterClient.swift */,
 				9809169F369D55D903E7DA2B /* OrbMenu.swift */,
 				852497A9FD56E812D22BA539 /* OrbSceneView.swift */,
 				AC0D31D7A3CE0C0589CB97BC /* PalmoAvatarView.swift */,
+				3B68C7DCED016DC7F01CF5E3 /* ProjectRegistry.swift */,
 				D6073C8D7435AEA733E814BF /* ReplyPresetEngine.swift */,
 				09FD6B6226F649B9072CD88D /* SettingsView.swift */,
+				10B3AEC2E205E05484A6A313 /* TicketDispatcher.swift */,
+				A699BFA498CE14B0F16D8777 /* TicketEngine.swift */,
+				0F267C7C45B249ED897AAA79 /* TicketOrbEngine.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -177,8 +203,11 @@
 				3E059C85B73E66FF181913E4 /* MenuActionTests.swift */,
 				332B038F6D4579399ECC8076 /* MouseControlEngineTests.swift */,
 				9F18615AC0904467F9DE42D1 /* OrbMenuEngineTests.swift */,
+				B327C51D44322251A1A61010 /* ProjectRegistryTests.swift */,
 				ECCBE81BAE0BA8103C781DFC /* ReplyPresetEngineTests.swift */,
 				2299A9619AA6A0A8435569A9 /* TestHands.swift */,
+				06E4D23EDB9AB8FE0F8419C4 /* TicketEngineTests.swift */,
+				43174E3D687E9D1A338320B7 /* TicketOrbEngineTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -287,11 +316,16 @@
 				9632A5923B7A84D061F85436 /* MenuBarView.swift in Sources */,
 				F708FD64549F5E26E74DA0F6 /* MouseControl.swift in Sources */,
 				816DA290865E3CEAD7620337 /* OnboardingView.swift in Sources */,
+				5B971F85151307B319FBECD4 /* OpenRouterClient.swift in Sources */,
 				A239BA5EEE0A151DB2029241 /* OrbMenu.swift in Sources */,
 				0679EA92E5445E9DD2E82DDA /* OrbSceneView.swift in Sources */,
 				8194914CB251D908E0808A37 /* PalmoAvatarView.swift in Sources */,
+				D324A8EB1A1FF04F991116E6 /* ProjectRegistry.swift in Sources */,
 				B6796C3A5F441712A105275E /* ReplyPresetEngine.swift in Sources */,
 				B9AFAE715B0B27C2C371EE77 /* SettingsView.swift in Sources */,
+				BC6D1F8CA6BFC61D653BFDEA /* TicketDispatcher.swift in Sources */,
+				0B4349D0A4008E1F7E707EDB /* TicketEngine.swift in Sources */,
+				37533EE45F195C5AA7BDC894 /* TicketOrbEngine.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -324,14 +358,22 @@
 				6287F1E2DD8A9BBBAEB006E8 /* MouseControl.swift in Sources */,
 				C4C088D55CE574453D023BFD /* MouseControlEngineTests.swift in Sources */,
 				5DB648F2930E554085DD3232 /* OnboardingView.swift in Sources */,
+				9545A7106773370104911BF6 /* OpenRouterClient.swift in Sources */,
 				B73B7B2C90B58E8C636371EF /* OrbMenu.swift in Sources */,
 				66EE7ECF6A243A71058D271D /* OrbMenuEngineTests.swift in Sources */,
 				3574002D54710BA0C8FB3AEE /* OrbSceneView.swift in Sources */,
 				781D5AC36CF28750789D910D /* PalmoAvatarView.swift in Sources */,
+				51510E144948E6F6287A78DD /* ProjectRegistry.swift in Sources */,
+				1141C66072693411564AF032 /* ProjectRegistryTests.swift in Sources */,
 				F0154A2E59A43BCCD1037C5B /* ReplyPresetEngine.swift in Sources */,
 				12DAFC94A2C7A184B4CFAFFA /* ReplyPresetEngineTests.swift in Sources */,
 				7133F3CEF6239BA62E3F4D55 /* SettingsView.swift in Sources */,
 				1BEE74918080FE126940BB00 /* TestHands.swift in Sources */,
+				6DA656EA815DC6D366B9CF93 /* TicketDispatcher.swift in Sources */,
+				B7661162E2E8B2109694680D /* TicketEngine.swift in Sources */,
+				C0FFD800BE5744BE1ED96E0A /* TicketEngineTests.swift in Sources */,
+				DDFA7DA1B4FC0642526FE59C /* TicketOrbEngine.swift in Sources */,
+				164D751356A5BA3D54E6A240 /* TicketOrbEngineTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

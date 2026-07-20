@@ -45,6 +45,22 @@ final class AppSettings: ObservableObject {
         didSet { d.set(anthropicKey, forKey: "anthropicKey") }
     }
 
+    // MARK: Ticket suggestions
+
+    /// OpenRouter API key used to generate ticket suggestions (stored locally;
+    /// the app is distributed outside the App Store and calls the API directly).
+    @Published var openRouterKey: String {
+        didSet { d.set(openRouterKey, forKey: "openRouterKey") }
+    }
+    /// OpenRouter model slug used for ticket generation.
+    @Published var openRouterModel: String {
+        didSet { d.set(openRouterModel, forKey: "openRouterModel") }
+    }
+    /// Master switch for the ticket-suggestion feature (opt-in).
+    @Published var ticketSuggestionsEnabled: Bool {
+        didSet { d.set(ticketSuggestionsEnabled, forKey: "ticketSuggestionsEnabled") }
+    }
+
     // MARK: General
 
     @Published var onboardingDone: Bool {
@@ -71,6 +87,9 @@ final class AppSettings: ObservableObject {
         thumbsUpCommand = AirCommand(rawValue: d.string(forKey: "thumbsUpCommand") ?? "") ?? .playPause
         voiceReactions = d.object(forKey: "voiceReactions") as? Bool ?? false
         anthropicKey = d.string(forKey: "anthropicKey") ?? ""
+        openRouterKey = d.string(forKey: "openRouterKey") ?? ""
+        openRouterModel = d.string(forKey: "openRouterModel") ?? "anthropic/claude-sonnet-4.5"
+        ticketSuggestionsEnabled = d.object(forKey: "ticketSuggestionsEnabled") as? Bool ?? false
         onboardingDone = d.bool(forKey: "onboardingDone")
         launchAtLogin = d.bool(forKey: "launchAtLogin")
         let stored = d.stringArray(forKey: "orbAppBundleIDs") ?? []

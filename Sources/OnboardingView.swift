@@ -159,7 +159,7 @@ struct OnboardingView: View {
         VStack(spacing: 12) {
             Text("You're all set!")
                 .font(.system(.largeTitle, design: .rounded).weight(.bold))
-            Text("Find me anytime in the menu bar. Chat with me too — I run entirely on your Mac with Apple Intelligence. Private, offline, free.")
+            Text("Find me anytime in the menu bar. Chat with me too — I run entirely on your Mac with Apple Intelligence. Private, offline, free.\n\nUsing Claude Code? Add an OpenRouter key in Settings → Tickets and I'll float tickets you can grab out of the air.")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 44)

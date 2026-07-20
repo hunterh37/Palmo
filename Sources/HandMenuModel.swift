@@ -69,6 +69,29 @@ final class HandMenuModel: ObservableObject {
     let replyEngine = ReplyPresetEngine()
     private let replySender = ClaudeReplySender()
 
+    /// Known projects (auto-registered from Claude session cwds).
+    let projects = ProjectRegistry()
+    /// OpenRouter-backed ticket suggestion generation.
+    let ticketEngine = TicketEngine()
+    private let ticketOrbEngine = TicketOrbEngine()
+    private let ticketDispatcher = TicketDispatcher()
+    /// Floating ticket cards shown in windowed mode.
+    @Published var ticketOrbs: [TicketOrbDisplay] = []
+    /// True while the ticket flow (announce/load/present) is on screen.
+    @Published var ticketsActive = false
+    /// Drop target shown while presenting tickets, in normalized video coords.
+    @Published var ticketDropZone: CGPoint?
+    /// 0...1 drop-zone fill of the currently grabbed ticket.
+    @Published var ticketSendProgress: CGFloat = 0
+    /// 0...1 fill of the fist-hold ring that dismisses the tickets.
+    @Published var ticketFistProgress: CGFloat = 0
+    /// Name of the project the on-screen tickets belong to.
+    @Published var ticketProjectName: String?
+    private var sessionsSub: AnyCancellable?
+    private var headPollTimer: Timer?
+    private var previousSessions: [String: Bool] = [:]  // id -> isDone
+    private var lastSuggestionAt: [String: Date] = [:]  // cwd -> last generation
+
     let session = AVCaptureSession()
     /// The buddy assistant (chat) engine, shared with the chat window.
     let assistant = AssistantEngine()
@@ -101,6 +124,8 @@ final class HandMenuModel: ObservableObject {
     /// Buddy face state derived from tracking + assistant activity.
     var buddyMood: BuddyMood {
         if assistant.isThinking { return .thinking }
+        if ticketEngine.isGenerating || ticketOrbEngine.isAnnouncing
+            || ticketOrbEngine.isLoading { return .thinking }
         if avatarSummonProgress > 0.02 { return .happy }
         if hands.contains(where: { $0.isPinching }) { return .happy }
         if !hands.isEmpty { return .watching }
@@ -147,8 +172,109 @@ final class HandMenuModel: ObservableObject {
             Task { @MainActor in self?.publish(hands, frameSize: frameSize) }
         }
         claudeSessions.start()
+        projects.load()
+        sessionsSub = claudeSessions.$sessions.sink { [weak self] sessions in
+            Task { @MainActor in self?.sessionsChanged(sessions) }
+        }
+        startHeadPolling()
         await configureCamera()
         startFPSTimer()
+    }
+
+    // MARK: Ticket suggestions
+
+    private var ticketsEnabled: Bool {
+        AppSettings.shared.ticketSuggestionsEnabled
+            && !AppSettings.shared.openRouterKey.isEmpty
+    }
+
+    /// Register every session cwd as a project and trigger suggestions when a
+    /// session finishes (working → done).
+    private func sessionsChanged(_ sessions: [ClaudeSession]) {
+        var current: [String: Bool] = [:]
+        for session in sessions {
+            current[session.id] = session.isDone
+            let project = projects.register(cwd: session.cwd)
+            if session.isDone, previousSessions[session.id] == false, let project {
+                maybeSuggestTickets(for: project)
+            }
+        }
+        previousSessions = current
+    }
+
+    /// Cheap 30s poll: a new commit on a registered project triggers suggestions.
+    private func startHeadPolling() {
+        headPollTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.ticketsEnabled else { return }
+                for project in self.projects.projects {
+                    let head = ProjectRegistry.currentHead(cwd: project.cwd)
+                    guard let head, head != project.lastSeenHead else { continue }
+                    let known = project.lastSeenHead != nil
+                    self.projects.updateHead(cwd: project.cwd, head: head)
+                    // Only react to changes, not the first observation.
+                    if known { self.maybeSuggestTickets(for: project) }
+                }
+            }
+        }
+    }
+
+    /// Manual trigger (toolbar button).
+    func requestTickets(for project: Project) {
+        lastSuggestionAt[project.cwd] = nil
+        maybeSuggestTickets(for: project, manual: true)
+    }
+
+    private func maybeSuggestTickets(for project: Project, manual: Bool = false) {
+        guard ticketsEnabled, !collapsed, !mouseModeEnabled else { return }
+        guard ticketOrbEngine.state == .idle || manual else { return }
+        // At most one automatic generation per project per 5 minutes.
+        if !manual, let last = lastSuggestionAt[project.cwd],
+           Date().timeIntervalSince(last) < 300 { return }
+        lastSuggestionAt[project.cwd] = Date()
+
+        if manual { ticketOrbEngine.reset() }
+        ticketProjectName = project.name
+        ticketOrbEngine.begin(now: CACurrentMediaTime())
+        voice.say("Looking for tickets in \(project.name)")
+        ticketEngine.start(project: project)
+    }
+
+    /// Deliver the grabbed ticket into the right project, then toast.
+    private func dispatchTicket(_ ticket: Ticket) {
+        let sessions = claudeSessions.sessions
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                let summary = try await self.ticketDispatcher.dispatch(ticket, sessions: sessions)
+                self.commandToast = "🎟️ \(summary)"
+                self.voice.say(summary)
+            } catch {
+                self.commandToast = "🎟️ Couldn't start — \(error.localizedDescription)"
+            }
+            self.scheduleToastDismiss()
+        }
+    }
+
+    private func clearTicketUI() {
+        if !ticketOrbs.isEmpty { ticketOrbs = [] }
+        ticketsActive = false
+        ticketDropZone = nil
+        ticketSendProgress = 0
+        ticketFistProgress = 0
+        ticketProjectName = nil
+    }
+
+    private func ticketStatus() -> String {
+        switch ticketOrbEngine.state {
+        case .announcing: return "Palmo spotted something…"
+        case .loading: return "Finding tickets for \(ticketProjectName ?? "your project")…"
+        case .grabbed: return "Drop the ticket on the ring to start Claude"
+        case .dispatched: return "On it — Claude is starting"
+        case .presenting:
+            return "Pinch a ticket to grab it (fist to dismiss)"
+        case .idle: return ""
+        }
     }
 
     private func configureCamera() async {
@@ -210,6 +336,13 @@ final class HandMenuModel: ObservableObject {
 
         // Claude session orbs live in collapsed mode; the fist gesture is
         // theirs there (mouse mode keeps the fist for scrolling).
+        // Tickets only live in windowed, non-mouse mode.
+        if (collapsed || mouseModeEnabled), ticketOrbEngine.isActive {
+            ticketOrbEngine.reset()
+            ticketEngine.cancel()
+            clearTicketUI()
+        }
+
         if collapsed && !mouseModeEnabled {
             claudeEngine.update(sessions: claudeSessions.sessions,
                                 presets: replyEngine.presets, hand: hand,
@@ -271,6 +404,42 @@ final class HandMenuModel: ObservableObject {
             return
         }
         mouseOrb = nil
+
+        // Windowed-mode ticket flow: while active it owns the pinch, and the
+        // orb menu stands down so the two don't fight over gestures.
+        if ticketOrbEngine.isActive {
+            ticketOrbEngine.update(tickets: ticketEngine.tickets,
+                                   generating: ticketEngine.isGenerating,
+                                   hand: hand, videoSize: frameSize, now: now)
+            if let fired = ticketOrbEngine.firedTicket { dispatchTicket(fired) }
+            if ticketOrbEngine.isActive {
+                ticketOrbs = ticketOrbEngine.orbs
+                ticketsActive = true
+                ticketDropZone = ticketOrbEngine.state == .loading
+                    || ticketOrbEngine.isAnnouncing ? nil : ticketOrbEngine.dropZoneCenter
+                ticketSendProgress = ticketOrbEngine.orbs
+                    .first(where: \.grabbed)?.sendProgress ?? 0
+                engine.reset()
+                orbs = []
+                ticketFistProgress = ticketOrbEngine.fistProgress
+                dismissProgress = 0
+                avatarSummonProgress = 0
+                selectionFingertip = nil
+                selectionDwellProgress = 0
+                statusText = ticketStatus()
+                return
+            }
+            // The flow just ended (dismissed, dispatched, or came up empty).
+            ticketEngine.cancel()
+            clearTicketUI()
+            if let error = ticketEngine.lastError {
+                commandToast = "🎟️ \(error)"
+                scheduleToastDismiss()
+            }
+        } else if ticketsActive {
+            clearTicketUI()
+        }
+
         engine.setHover(from: hand)
         engine.update(hand: hand, videoSize: frameSize, now: now)
         orbs = engine.orbs

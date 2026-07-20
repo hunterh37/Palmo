@@ -255,6 +255,16 @@ struct ContentView: View {
                         MouseOrbOverlay(orb: mouseOrb, size: geo.size,
                                         videoSize: model.videoSize)
                     }
+                    if model.ticketsActive {
+                        TicketOrbOverlay(orbs: model.ticketOrbs,
+                                         dropZone: model.ticketDropZone,
+                                         sendProgress: model.ticketSendProgress,
+                                         fistProgress: model.ticketFistProgress,
+                                         loading: model.ticketEngine.isGenerating
+                                             && model.ticketOrbs.isEmpty,
+                                         projectName: model.ticketProjectName,
+                                         size: geo.size, videoSize: model.videoSize)
+                    }
                     HandOverlay(hands: model.hands, size: geo.size,
                                 videoSize: model.videoSize)
                 } else {
@@ -318,6 +328,23 @@ struct ContentView: View {
             iconToggle("cursorarrow", $model.mouseModeEnabled, "Mouse mode")
             if model.mouseModeEnabled {
                 iconToggle("arrow.left.arrow.right", $model.mouseInvertX, "Invert X")
+            }
+            if settings.ticketSuggestionsEnabled,
+               let project = model.projects.mostRecent {
+                Button {
+                    model.requestTickets(for: project)
+                } label: {
+                    Image(systemName: "lightbulb")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(model.ticketsActive ? .white : .white.opacity(0.45))
+                        .frame(width: 28, height: 24)
+                        .background(
+                            model.ticketsActive ? AnyShapeStyle(Brand.accent.opacity(0.85))
+                                                : AnyShapeStyle(Color.white.opacity(0.08)),
+                            in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .help("Suggest tickets for \(project.name)")
             }
             iconToggle("arrow.trianglehead.2.clockwise.rotate.90", $model.mirrored, "Mirror")
             iconToggle("rectangle.compress.vertical", $model.collapsed, "Collapse")
@@ -764,6 +791,176 @@ private struct MouseOrbOverlay: View {
                              y: (size.height - drawn.height) / 2)
         return CGPoint(x: offset.x + p.x * drawn.width,
                        y: offset.y + p.y * drawn.height)
+    }
+}
+
+/// Floating ticket cards the user pinch-grabs and drops on the send ring to
+/// hand off to Claude Code. Also renders the loading shimmer while tickets
+/// are being generated and the fist-hold dismiss ring.
+private struct TicketOrbOverlay: View {
+    let orbs: [TicketOrbDisplay]
+    let dropZone: CGPoint?
+    let sendProgress: CGFloat
+    let fistProgress: CGFloat
+    let loading: Bool
+    let projectName: String?
+    let size: CGSize
+    let videoSize: CGSize
+
+    var body: some View {
+        ZStack {
+            if let dropZone, !orbs.isEmpty {
+                dropRing(at: point(dropZone))
+            }
+            ForEach(orbs) { cardView($0) }
+            if loading { loadingBadge }
+            if fistProgress > 0.03 { fistRing }
+        }
+        .allowsHitTesting(false)
+    }
+
+    private func cardView(_ orb: TicketOrbDisplay) -> some View {
+        let c = point(orb.center)
+        let h = orb.radiusNorm * drawnSize().height * orb.scale
+            * (orb.grabbed ? 1.12 : 1.0)
+        let w = h * 2.4
+        let tint = priorityTint(orb.ticket.priority)
+        return VStack(spacing: h * 0.10) {
+            HStack(spacing: 5) {
+                Circle().fill(tint)
+                    .frame(width: max(h * 0.14, 5), height: max(h * 0.14, 5))
+                Text(orb.ticket.title)
+                    .font(.system(size: max(h * 0.20, 10), weight: .bold,
+                                  design: .rounded))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                Spacer(minLength: 0)
+            }
+            if !orb.ticket.detail.isEmpty {
+                Text(orb.ticket.detail)
+                    .font(.system(size: max(h * 0.15, 8)))
+                    .foregroundStyle(.white.opacity(0.75))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .foregroundStyle(.white)
+        .padding(h * 0.22)
+        .frame(width: w, height: h * 2, alignment: .top)
+        .background(
+            RoundedRectangle(cornerRadius: h * 0.28, style: .continuous)
+                .fill(.black.opacity(orb.grabbed ? 0.72 : 0.55))
+                .overlay(RoundedRectangle(cornerRadius: h * 0.28, style: .continuous)
+                    .strokeBorder(orb.grabbed ? .white.opacity(0.9) : tint.opacity(0.7),
+                                  lineWidth: orb.grabbed ? 2.5 : 1.5)))
+        .shadow(color: tint.opacity(orb.grabbed ? 0.6 : 0.3),
+                radius: orb.grabbed ? 14 : 8, y: 3)
+        .position(c)
+        .animation(.easeOut(duration: 0.12), value: orb.grabbed)
+    }
+
+    private func dropRing(at c: CGPoint) -> some View {
+        let r = 0.11 * drawnSize().height
+        return ZStack {
+            Circle()
+                .strokeBorder(style: StrokeStyle(lineWidth: 3, dash: [7, 6]))
+                .foregroundStyle(.white.opacity(0.45))
+            Circle()
+                .trim(from: 0, to: sendProgress)
+                .stroke(Brand.accent, style: .init(lineWidth: 5, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            VStack(spacing: 2) {
+                Image(systemName: "paperplane.fill")
+                    .font(.system(size: max(r * 0.30, 11), weight: .bold))
+                Text("Start Claude")
+                    .font(.system(size: max(r * 0.14, 8), weight: .semibold,
+                                  design: .rounded))
+            }
+            .foregroundStyle(.white.opacity(sendProgress > 0.02 ? 1 : 0.75))
+        }
+        .frame(width: r * 2, height: r * 2)
+        .position(c)
+    }
+
+    private var loadingBadge: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 6) {
+                ProgressView().controlSize(.small)
+                Text("Finding tickets\(projectName.map { " for \($0)" } ?? "")…")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Capsule().fill(.black.opacity(0.55)))
+            HStack(spacing: 10) {
+                ForEach(0..<3, id: \.self) { i in
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(.white.opacity(0.12))
+                        .frame(width: 110, height: 56)
+                        .shimmering(delay: Double(i) * 0.2)
+                }
+            }
+        }
+        .position(x: size.width / 2, y: size.height * 0.24)
+    }
+
+    private var fistRing: some View {
+        ZStack {
+            Circle().stroke(.white.opacity(0.25), lineWidth: 5)
+            Circle()
+                .trim(from: 0, to: fistProgress)
+                .stroke(Color.red, style: .init(lineWidth: 5, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            Image(systemName: "xmark")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(.white.opacity(0.9))
+        }
+        .frame(width: 44, height: 44)
+        .position(x: size.width / 2, y: size.height / 2)
+    }
+
+    private func priorityTint(_ p: Int) -> Color {
+        switch p {
+        case 1: return .orange
+        case 2: return Brand.accent
+        default: return .blue
+        }
+    }
+
+    private func drawnSize() -> CGSize {
+        guard videoSize.width > 0, videoSize.height > 0,
+              size.width > 0, size.height > 0 else { return size }
+        let scale = max(size.width / videoSize.width, size.height / videoSize.height)
+        return CGSize(width: videoSize.width * scale, height: videoSize.height * scale)
+    }
+
+    private func point(_ p: CGPoint) -> CGPoint {
+        let drawn = drawnSize()
+        let offset = CGPoint(x: (size.width - drawn.width) / 2,
+                             y: (size.height - drawn.height) / 2)
+        return CGPoint(x: offset.x + p.x * drawn.width,
+                       y: offset.y + p.y * drawn.height)
+    }
+}
+
+/// Subtle opacity pulse for loading placeholders.
+private struct ShimmerModifier: ViewModifier {
+    let delay: Double
+    @State private var on = false
+    func body(content: Content) -> some View {
+        content
+            .opacity(on ? 0.55 : 1.0)
+            .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)
+                .delay(delay), value: on)
+            .onAppear { on = true }
+    }
+}
+
+private extension View {
+    func shimmering(delay: Double) -> some View {
+        modifier(ShimmerModifier(delay: delay))
     }
 }
 
