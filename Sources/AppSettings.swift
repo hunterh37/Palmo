@@ -117,7 +117,7 @@ final class AppSettings: ObservableObject {
         openRouterKey = d.string(forKey: "openRouterKey") ?? ""
         openRouterModel = d.string(forKey: "openRouterModel") ?? "anthropic/claude-sonnet-4.5"
         ticketSuggestionsEnabled = d.object(forKey: "ticketSuggestionsEnabled") as? Bool ?? false
-        projectPulseEnabled = d.object(forKey: "projectPulseEnabled") as? Bool ?? false
+        projectPulseEnabled = d.object(forKey: "projectPulseEnabled") as? Bool ?? true
         pulseNarratorMode = PulseNarratorMode(rawValue: d.string(forKey: "pulseNarratorMode") ?? "")
             ?? .auto
         onboardingDone = d.bool(forKey: "onboardingDone")
