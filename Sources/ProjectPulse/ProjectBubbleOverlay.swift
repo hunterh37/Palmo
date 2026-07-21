@@ -11,6 +11,7 @@ struct ProjectBubbleOverlay: View {
     let actionChips: [PulseActionChip]
     let summonProgress: CGFloat
     let dismissProgress: CGFloat
+    var greeting: String = ""
     let anchor: CGPoint
     let mood: BuddyMood
     let gaze: CGPoint
@@ -20,6 +21,7 @@ struct ProjectBubbleOverlay: View {
     var body: some View {
         ZStack {
             palmo
+            if bubbles.isEmpty, !greeting.isEmpty { greetingBubble }
             ForEach(bubbles) { bubbleView($0) }
             ForEach(actionChips) { chipView($0) }
             if dismissProgress > 0.03 { fistRing }
@@ -50,6 +52,33 @@ struct ProjectBubbleOverlay: View {
                 .frame(width: r * 1.9, height: r * 1.9)
         }
         .position(c)
+    }
+
+    // MARK: - Idle greeting speech bubble
+
+    private var greetingBubble: some View {
+        let drawn = drawnSize()
+        // Sit up and to the right of Palmo, like a speech bubble.
+        let center = point(CGPoint(x: min(anchor.x + 0.32, 0.66), y: anchor.y - 0.20))
+        let maxW = drawn.width * 0.5
+        return Text(greeting)
+            .font(.system(size: max(drawn.height * 0.026, 11), weight: .semibold,
+                          design: .rounded))
+            .foregroundStyle(.white)
+            .multilineTextAlignment(.leading)
+            .lineLimit(3)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+            .frame(maxWidth: maxW, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.black.opacity(0.62))
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(Brand.accent.opacity(0.5), lineWidth: 1.5)))
+            .shadow(color: .black.opacity(0.4), radius: 8, y: 3)
+            .position(center)
+            .transition(.opacity)
     }
 
     // MARK: - Bubbles

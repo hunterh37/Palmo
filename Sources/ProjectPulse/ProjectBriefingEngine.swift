@@ -98,9 +98,9 @@ final class ProjectBriefingEngine {
 
     var isActive: Bool { state == .briefing }
 
-    /// Where Palmo sits (bottom-left); the summon target and the bubbles'
-    /// anchor point.
-    let anchor = CGPoint(x: 0.13, y: 0.80)
+    /// Where Palmo sits (lower-left, nudged in off the edge); the summon
+    /// target and the bubbles' anchor point.
+    let anchor = CGPoint(x: 0.24, y: 0.78)
 
     // Tuning.
     private let summonHold: CFTimeInterval = 1.0

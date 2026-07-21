@@ -111,6 +111,9 @@ final class HandMenuModel: ObservableObject {
     @Published var pulseActionChips: [PulseActionChip] = []
     @Published var pulseSummonProgress: CGFloat = 0
     @Published var pulseDismissProgress: CGFloat = 0
+    /// Idle speech-bubble line Palmo "says" before the stack is summoned,
+    /// summarizing recent committed work / what needs attention.
+    @Published var pulseGreeting: String = ""
     /// Palmo's mood during a briefing, derived from the aggregate project state.
     var pulseMood: BuddyMood { ProjectPulseEngine.shared.aggregateMood }
 
@@ -606,6 +609,7 @@ final class HandMenuModel: ObservableObject {
         pulseSummonProgress = projectBriefing.summonProgress
         pulseDismissProgress = projectBriefing.dismissProgress
         if let action = projectBriefing.firedAction { handlePulseAction(action) }
+        pulseGreeting = projectBriefing.isActive ? "" : pulseGreetingLine()
 
         // Other collapsed systems stand down while the briefing owns the frame.
         if !claudeOrbs.isEmpty { claudeOrbs = [] }
@@ -626,6 +630,26 @@ final class HandMenuModel: ObservableObject {
         pulseActionChips = []
         pulseSummonProgress = 0
         pulseDismissProgress = 0
+    }
+
+    /// A short, friendly line for Palmo's idle speech bubble, favouring what
+    /// needs attention, otherwise the most recent committed work.
+    private func pulseGreetingLine() -> String {
+        let pulses = ProjectPulseEngine.shared.pulses
+        guard !pulses.isEmpty else { return "Hi! Start a Claude session and I'll track it here." }
+        let needs = ProjectPulseEngine.shared.attentionCount
+        if needs > 0 {
+            return "\(needs) project\(needs == 1 ? "" : "s") need you — point at me to see."
+        }
+        if let working = pulses.first(where: { $0.state == .working }) {
+            return "Claude's busy in \(working.name)…"
+        }
+        // Nothing urgent — surface the most recent committed work.
+        let recent = pulses.max { $0.updatedAt < $1.updatedAt } ?? pulses[0]
+        if !recent.recentCommit.isEmpty {
+            return "Latest in \(recent.name): “\(recent.recentCommit)”"
+        }
+        return "All caught up across \(pulses.count) project\(pulses.count == 1 ? "" : "s") ✨"
     }
 
     private func pulseStatus() -> String {

@@ -396,6 +396,7 @@ struct ContentView: View {
                             actionChips: model.pulseActionChips,
                             summonProgress: model.pulseSummonProgress,
                             dismissProgress: model.pulseDismissProgress,
+                            greeting: model.pulseGreeting,
                             anchor: model.projectBriefing.anchor,
                             mood: model.pulseMood, gaze: model.buddyGaze,
                             size: geo.size, videoSize: model.videoSize)
