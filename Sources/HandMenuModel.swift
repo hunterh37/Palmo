@@ -68,6 +68,12 @@ final class HandMenuModel: ObservableObject {
     private var notchCollapseWork: DispatchWorkItem?
     /// How long the panel stays down after the last hand disappears.
     private let notchCollapseDelay: TimeInterval = 1.5
+    /// While interacting with the briefing, keep the panel down until this time
+    /// (media-clock seconds). Bumped on every interaction so a brief tracking
+    /// dropout mid-task doesn't retract the panel.
+    private var notchKeepAliveUntil: CFTimeInterval = 0
+    /// Grace window held (and reset) on each briefing interaction.
+    private let notchKeepAlive: CFTimeInterval = 15
 
     @Published var mouseControlTrusted: Bool = true
 
@@ -355,14 +361,7 @@ final class HandMenuModel: ObservableObject {
                 notchCollapseWork = nil
                 if !notchExpanded { notchExpanded = true }
             } else if notchExpanded, notchCollapseWork == nil {
-                let work = DispatchWorkItem { [weak self] in
-                    guard let self, self.collapsed else { return }
-                    self.notchExpanded = false
-                    self.notchCollapseWork = nil
-                }
-                notchCollapseWork = work
-                DispatchQueue.main.asyncAfter(
-                    deadline: .now() + notchCollapseDelay, execute: work)
+                scheduleNotchRetract()
             }
         }
 
@@ -596,6 +595,36 @@ final class HandMenuModel: ObservableObject {
         }
     }
 
+    /// Schedule the notch panel to retract, honouring the interaction
+    /// keep-alive: if we're still within the 15s grace window it waits out the
+    /// remaining time and re-checks, so an in-progress task never gets cut off.
+    private func scheduleNotchRetract() {
+        let now = CACurrentMediaTime()
+        let delay = max(notchCollapseDelay, notchKeepAliveUntil - now)
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.collapsed else { return }
+            if CACurrentMediaTime() < self.notchKeepAliveUntil {
+                self.notchCollapseWork = nil
+                self.scheduleNotchRetract()   // extended by a fresh interaction
+                return
+            }
+            self.notchExpanded = false
+            self.notchCollapseWork = nil
+        }
+        notchCollapseWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+    }
+
+    /// Reset the 15s keep-alive so the notch stays down while the user is
+    /// actively engaging the briefing.
+    private func bumpNotchKeepAlive() {
+        guard collapsed else { return }
+        notchKeepAliveUntil = CACurrentMediaTime() + notchKeepAlive
+        notchCollapseWork?.cancel()
+        notchCollapseWork = nil
+        if !notchExpanded { notchExpanded = true }
+    }
+
     // MARK: Project Pulse briefing
 
     /// Feed the briefing engine and mirror its display state; route any fired
@@ -610,6 +639,13 @@ final class HandMenuModel: ObservableObject {
         pulseDismissProgress = projectBriefing.dismissProgress
         if let action = projectBriefing.firedAction { handlePulseAction(action) }
         pulseGreeting = projectBriefing.isActive ? "" : pulseGreetingLine()
+
+        // A hand in frame while the briefing is open counts as interaction and
+        // resets the 15s keep-alive; when the hand leaves, the countdown runs
+        // from the last interaction so the panel doesn't retract mid-task.
+        if hand != nil && projectBriefing.isActive {
+            bumpNotchKeepAlive()
+        }
 
         // Other collapsed systems stand down while the briefing owns the frame.
         if !claudeOrbs.isEmpty { claudeOrbs = [] }
@@ -639,7 +675,8 @@ final class HandMenuModel: ObservableObject {
         guard !pulses.isEmpty else { return "Hi! Start a Claude session and I'll track it here." }
         let needs = ProjectPulseEngine.shared.attentionCount
         if needs > 0 {
-            return "\(needs) project\(needs == 1 ? "" : "s") need you — point at me to see."
+            let noun = needs == 1 ? "project needs" : "projects need"
+            return "\(needs) \(noun) you — point at me to see."
         }
         if let working = pulses.first(where: { $0.state == .working }) {
             return "Claude's busy in \(working.name)…"
@@ -662,9 +699,11 @@ final class HandMenuModel: ObservableObject {
             return "Point at Palmo for 1s to see your projects"
         }
         let needs = ProjectPulseEngine.shared.attentionCount
-        return needs > 0
-            ? "\(needs) project\(needs == 1 ? "" : "s") need you — point to open"
-            : "Point at a project to see its status"
+        if needs > 0 {
+            let noun = needs == 1 ? "project needs" : "projects need"
+            return "\(needs) \(noun) you — point to open"
+        }
+        return "Point at a project to see its status"
     }
 
     /// Route a briefing action into the existing session / terminal machinery,

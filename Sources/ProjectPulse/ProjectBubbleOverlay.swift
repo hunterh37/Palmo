@@ -58,27 +58,27 @@ struct ProjectBubbleOverlay: View {
 
     private var greetingBubble: some View {
         let drawn = drawnSize()
-        // Sit up and to the right of Palmo, like a speech bubble.
-        let center = point(CGPoint(x: min(anchor.x + 0.32, 0.66), y: anchor.y - 0.20))
-        let maxW = drawn.width * 0.5
-        return Text(greeting)
-            .font(.system(size: max(drawn.height * 0.026, 11), weight: .semibold,
-                          design: .rounded))
-            .foregroundStyle(.white)
-            .multilineTextAlignment(.leading)
-            .lineLimit(3)
-            .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 9)
-            .frame(maxWidth: maxW, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(.black.opacity(0.62))
-                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(Brand.accent.opacity(0.5), lineWidth: 1.5)))
-            .shadow(color: .black.opacity(0.4), radius: 8, y: 3)
-            .position(center)
-            .transition(.opacity)
+        let center = point(CGPoint(x: min(anchor.x + 0.32, 0.66), y: anchor.y - 0.22))
+        // Little trailing puffs from Palmo up to the cloud, like a thought.
+        let tail1 = point(CGPoint(x: anchor.x + 0.11, y: anchor.y - 0.10))
+        let tail2 = point(CGPoint(x: anchor.x + 0.19, y: anchor.y - 0.16))
+        let r = drawn.height
+        return ZStack {
+            puff(at: tail1, size: r * 0.030)
+            puff(at: tail2, size: r * 0.042)
+            CloudBubble(text: greeting,
+                        maxWidth: drawn.width * 0.5,
+                        fontSize: max(r * 0.026, 11))
+                .position(center)
+        }
+    }
+
+    private func puff(at c: CGPoint, size: CGFloat) -> some View {
+        Circle()
+            .fill(.white.opacity(0.95))
+            .frame(width: size, height: size)
+            .shadow(color: .black.opacity(0.18), radius: 3, y: 2)
+            .position(c)
     }
 
     // MARK: - Bubbles
@@ -209,5 +209,69 @@ struct ProjectBubbleOverlay: View {
                              y: (size.height - drawn.height) / 2)
         return CGPoint(x: offset.x + p.x * drawn.width,
                        y: offset.y + p.y * drawn.height)
+    }
+}
+
+// MARK: - Cloud speech bubble
+
+/// A soft, fluffy cloud built from overlapping puffs, used as the backdrop for
+/// Palmo's idle greeting.
+private struct CloudShape: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        let w = r.width, h = r.height, x = r.minX, y = r.minY
+        // Rounded base slab.
+        p.addRoundedRect(in: CGRect(x: x, y: y + h * 0.40, width: w, height: h * 0.60),
+                         cornerSize: CGSize(width: h * 0.30, height: h * 0.30))
+        // Overlapping puffs across the top (union via non-zero winding).
+        p.addEllipse(in: CGRect(x: x + w * 0.01, y: y + h * 0.30, width: w * 0.34, height: h * 0.60))
+        p.addEllipse(in: CGRect(x: x + w * 0.20, y: y + h * 0.00, width: w * 0.42, height: h * 0.78))
+        p.addEllipse(in: CGRect(x: x + w * 0.52, y: y + h * 0.12, width: w * 0.38, height: h * 0.66))
+        p.addEllipse(in: CGRect(x: x + w * 0.70, y: y + h * 0.32, width: w * 0.29, height: h * 0.56))
+        return p
+    }
+}
+
+/// The greeting text on a cloud that pops in and gently bobs — cute, alive,
+/// and legible against any webcam background.
+private struct CloudBubble: View {
+    let text: String
+    let maxWidth: CGFloat
+    let fontSize: CGFloat
+    @State private var appear = false
+    @State private var bob = false
+
+    var body: some View {
+        Text(text)
+            .font(.system(size: fontSize, weight: .semibold, design: .rounded))
+            .foregroundStyle(Color(white: 0.17))
+            .multilineTextAlignment(.center)
+            .lineLimit(3)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, fontSize * 1.2)
+            .padding(.top, fontSize * 1.5)
+            .padding(.bottom, fontSize * 1.1)
+            .frame(maxWidth: maxWidth)
+            .background(
+                CloudShape()
+                    .fill(.white)
+                    .overlay(
+                        // Soft top sheen for a puffy, three-dimensional feel.
+                        CloudShape()
+                            .fill(LinearGradient(
+                                colors: [.white, Color(white: 0.90)],
+                                startPoint: .top, endPoint: .bottom))
+                            .blendMode(.multiply))
+                    .shadow(color: .black.opacity(0.22), radius: 7, y: 3)
+            )
+            .scaleEffect(appear ? 1 : 0.55, anchor: .bottomLeading)
+            .opacity(appear ? 1 : 0)
+            .offset(y: bob ? -4 : 3)
+            .onAppear {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) { appear = true }
+                withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
+                    bob = true
+                }
+            }
     }
 }
