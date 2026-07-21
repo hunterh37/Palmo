@@ -18,6 +18,7 @@ struct HandOrbMenuApp: App {
             ContentView()
                 .environmentObject(model)
                 .task { await model.start() }
+                .task { ClaudeUsageModule.activate() }
                 .sheet(isPresented: .constant(!settings.onboardingDone)) {
                     OnboardingView { }
                         .interactiveDismissDisabled()
@@ -40,6 +41,9 @@ struct HandOrbMenuApp: App {
                 .environmentObject(model)
         }
         .menuBarExtraStyle(.window)
+
+        // Claude usage bars (per-account popover + notch overlay).
+        ClaudeUsageModule.menuBar
     }
 }
 
