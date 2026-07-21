@@ -105,6 +105,15 @@ final class HandMenuModel: ObservableObject {
     @Published var ticketFistProgress: CGFloat = 0
     /// Name of the project the on-screen tickets belong to.
     @Published var ticketProjectName: String?
+    /// Project-pulse briefing (collapsed-mode project-management overlay).
+    let projectBriefing = ProjectBriefingEngine()
+    @Published var pulseBubbles: [PulseBubbleDisplay] = []
+    @Published var pulseActionChips: [PulseActionChip] = []
+    @Published var pulseSummonProgress: CGFloat = 0
+    @Published var pulseDismissProgress: CGFloat = 0
+    /// Palmo's mood during a briefing, derived from the aggregate project state.
+    var pulseMood: BuddyMood { ProjectPulseEngine.shared.aggregateMood }
+
     private var sessionsSub: AnyCancellable?
     private var headPollTimer: Timer?
     private var previousSessions: [String: Bool] = [:]  // id -> isDone
@@ -191,6 +200,7 @@ final class HandMenuModel: ObservableObject {
         }
         claudeSessions.start()
         projects.load()
+        ProjectPulseModule.activate(registry: projects, sessions: claudeSessions)
         sessionsSub = claudeSessions.$sessions.sink { [weak self] sessions in
             Task { @MainActor in self?.sessionsChanged(sessions) }
         }
@@ -379,6 +389,14 @@ final class HandMenuModel: ObservableObject {
             ticketEngine.cancel()
             clearTicketUI()
         }
+
+        // Project-pulse briefing takes over collapsed mode when enabled,
+        // standing in for the Claude session orbs (they share the fist gesture).
+        if collapsed && !mouseModeEnabled && AppSettings.shared.projectPulseEnabled {
+            driveProjectBriefing(hand: hand, frameSize: frameSize, now: now)
+            return
+        }
+        clearProjectBriefingIfNeeded()
 
         if collapsed && !mouseModeEnabled {
             claudeEngine.update(sessions: claudeSessions.sessions,
@@ -573,6 +591,98 @@ final class HandMenuModel: ObservableObject {
             try? await Task.sleep(nanoseconds: 2_400_000_000)
             if !Task.isCancelled { self?.commandToast = nil }
         }
+    }
+
+    // MARK: Project Pulse briefing
+
+    /// Feed the briefing engine and mirror its display state; route any fired
+    /// action. Stands down the other collapsed-mode overlays.
+    private func driveProjectBriefing(hand: DetectedHand?, frameSize: CGSize,
+                                      now: CFTimeInterval) {
+        projectBriefing.update(pulses: ProjectPulseEngine.shared.pulses, hand: hand,
+                               videoSize: frameSize, now: now)
+        pulseBubbles = projectBriefing.bubbles
+        pulseActionChips = projectBriefing.actionChips
+        pulseSummonProgress = projectBriefing.summonProgress
+        pulseDismissProgress = projectBriefing.dismissProgress
+        if let action = projectBriefing.firedAction { handlePulseAction(action) }
+
+        // Other collapsed systems stand down while the briefing owns the frame.
+        if !claudeOrbs.isEmpty { claudeOrbs = [] }
+        if !claudeReplyOrbs.isEmpty { claudeReplyOrbs = [] }
+        claudeComposing = false
+        claudeGenerating = false
+        claudeFistProgress = 0
+        orbs = []
+        mouseOrb = nil
+        statusText = pulseStatus()
+    }
+
+    private func clearProjectBriefingIfNeeded() {
+        guard projectBriefing.isActive || !pulseBubbles.isEmpty
+            || pulseSummonProgress > 0 else { return }
+        projectBriefing.reset()
+        pulseBubbles = []
+        pulseActionChips = []
+        pulseSummonProgress = 0
+        pulseDismissProgress = 0
+    }
+
+    private func pulseStatus() -> String {
+        let pulses = ProjectPulseEngine.shared.pulses
+        if pulses.isEmpty { return "No projects yet — start a Claude session" }
+        if projectBriefing.expandedID != nil {
+            return "Point at an action, or point back at the card to close"
+        }
+        if !projectBriefing.isActive {
+            return "Point at Palmo for 1s to see your projects"
+        }
+        let needs = ProjectPulseEngine.shared.attentionCount
+        return needs > 0
+            ? "\(needs) project\(needs == 1 ? "" : "s") need you — point to open"
+            : "Point at a project to see its status"
+    }
+
+    /// Route a briefing action into the existing session / terminal machinery,
+    /// then close the briefing for a clean exit.
+    private func handlePulseAction(_ action: PulseAction) {
+        switch action {
+        case .acknowledge(let cwd):
+            let target = (cwd as NSString).standardizingPath
+            for session in claudeSessions.sessions
+            where (session.cwd as NSString).standardizingPath == target && session.isDone {
+                claudeSessions.acknowledge(session.id)
+            }
+            commandToast = "✅ Marked reviewed"
+        case .openTerminal(let cwd):
+            openTerminal(cwd: cwd)
+            commandToast = "💻 Opened Terminal"
+        case .tickets(let cwd):
+            if let project = projects.projects.first(where: {
+                ($0.cwd as NSString).standardizingPath == (cwd as NSString).standardizingPath
+            }) {
+                // Ticket cards live in windowed mode; leave collapse and generate.
+                collapsed = false
+                requestTickets(for: project)
+                commandToast = "🎟️ Finding tickets for \(project.name)"
+            }
+        case .reply(let cwd):
+            // Hand off to the on-device compose flow via the Claude session orbs.
+            openTerminal(cwd: cwd)
+            commandToast = "💬 Opened session to reply"
+        }
+        scheduleToastDismiss()
+        projectBriefing.reset()
+        pulseBubbles = []
+        pulseActionChips = []
+    }
+
+    /// Open Terminal at a working directory.
+    private func openTerminal(cwd: String) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        process.arguments = ["-a", "Terminal", cwd]
+        try? process.run()
     }
 
     private func mouseStatus(hand: DetectedHand?) -> String {

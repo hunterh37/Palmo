@@ -390,11 +390,22 @@ struct ContentView: View {
                     CameraPreview(session: model.session, mirrored: model.mirrored)
                     HandOverlay(hands: model.hands, size: geo.size,
                                 videoSize: model.videoSize)
-                    ClaudeOrbOverlay(orbs: model.claudeOrbs,
-                                     replyOrbs: model.claudeReplyOrbs,
-                                     generating: model.claudeGenerating,
-                                     fistProgress: model.claudeFistProgress,
-                                     size: geo.size, videoSize: model.videoSize)
+                    if settings.projectPulseEnabled {
+                        ProjectBubbleOverlay(
+                            bubbles: model.pulseBubbles,
+                            actionChips: model.pulseActionChips,
+                            summonProgress: model.pulseSummonProgress,
+                            dismissProgress: model.pulseDismissProgress,
+                            anchor: model.projectBriefing.anchor,
+                            mood: model.pulseMood, gaze: model.buddyGaze,
+                            size: geo.size, videoSize: model.videoSize)
+                    } else {
+                        ClaudeOrbOverlay(orbs: model.claudeOrbs,
+                                         replyOrbs: model.claudeReplyOrbs,
+                                         generating: model.claudeGenerating,
+                                         fistProgress: model.claudeFistProgress,
+                                         size: geo.size, videoSize: model.videoSize)
+                    }
                 } else {
                     cameraDeniedNotice
                 }
