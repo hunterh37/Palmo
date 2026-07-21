@@ -68,6 +68,12 @@ final class HandMenuModel: ObservableObject {
     private var notchCollapseWork: DispatchWorkItem?
     /// How long the panel stays down after the last hand disappears.
     private let notchCollapseDelay: TimeInterval = 1.5
+    /// While interacting with the briefing, keep the panel down until this time
+    /// (media-clock seconds). Bumped on every interaction so a brief tracking
+    /// dropout mid-task doesn't retract the panel.
+    private var notchKeepAliveUntil: CFTimeInterval = 0
+    /// Grace window held (and reset) on each briefing interaction.
+    private let notchKeepAlive: CFTimeInterval = 15
 
     @Published var mouseControlTrusted: Bool = true
 
@@ -105,6 +111,18 @@ final class HandMenuModel: ObservableObject {
     @Published var ticketFistProgress: CGFloat = 0
     /// Name of the project the on-screen tickets belong to.
     @Published var ticketProjectName: String?
+    /// Project-pulse briefing (collapsed-mode project-management overlay).
+    let projectBriefing = ProjectBriefingEngine()
+    @Published var pulseBubbles: [PulseBubbleDisplay] = []
+    @Published var pulseActionChips: [PulseActionChip] = []
+    @Published var pulseSummonProgress: CGFloat = 0
+    @Published var pulseDismissProgress: CGFloat = 0
+    /// Idle speech-bubble line Palmo "says" before the stack is summoned,
+    /// summarizing recent committed work / what needs attention.
+    @Published var pulseGreeting: String = ""
+    /// Palmo's mood during a briefing, derived from the aggregate project state.
+    var pulseMood: BuddyMood { ProjectPulseEngine.shared.aggregateMood }
+
     private var sessionsSub: AnyCancellable?
     private var headPollTimer: Timer?
     private var previousSessions: [String: Bool] = [:]  // id -> isDone
@@ -191,6 +209,7 @@ final class HandMenuModel: ObservableObject {
         }
         claudeSessions.start()
         projects.load()
+        ProjectPulseModule.activate(registry: projects, sessions: claudeSessions)
         sessionsSub = claudeSessions.$sessions.sink { [weak self] sessions in
             Task { @MainActor in self?.sessionsChanged(sessions) }
         }
@@ -342,14 +361,7 @@ final class HandMenuModel: ObservableObject {
                 notchCollapseWork = nil
                 if !notchExpanded { notchExpanded = true }
             } else if notchExpanded, notchCollapseWork == nil {
-                let work = DispatchWorkItem { [weak self] in
-                    guard let self, self.collapsed else { return }
-                    self.notchExpanded = false
-                    self.notchCollapseWork = nil
-                }
-                notchCollapseWork = work
-                DispatchQueue.main.asyncAfter(
-                    deadline: .now() + notchCollapseDelay, execute: work)
+                scheduleNotchRetract()
             }
         }
 
@@ -379,6 +391,14 @@ final class HandMenuModel: ObservableObject {
             ticketEngine.cancel()
             clearTicketUI()
         }
+
+        // Project-pulse briefing takes over collapsed mode when enabled,
+        // standing in for the Claude session orbs (they share the fist gesture).
+        if collapsed && !mouseModeEnabled && AppSettings.shared.projectPulseEnabled {
+            driveProjectBriefing(hand: hand, frameSize: frameSize, now: now)
+            return
+        }
+        clearProjectBriefingIfNeeded()
 
         if collapsed && !mouseModeEnabled {
             claudeEngine.update(sessions: claudeSessions.sessions,
@@ -573,6 +593,159 @@ final class HandMenuModel: ObservableObject {
             try? await Task.sleep(nanoseconds: 2_400_000_000)
             if !Task.isCancelled { self?.commandToast = nil }
         }
+    }
+
+    /// Schedule the notch panel to retract, honouring the interaction
+    /// keep-alive: if we're still within the 15s grace window it waits out the
+    /// remaining time and re-checks, so an in-progress task never gets cut off.
+    private func scheduleNotchRetract() {
+        let now = CACurrentMediaTime()
+        let delay = max(notchCollapseDelay, notchKeepAliveUntil - now)
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.collapsed else { return }
+            if CACurrentMediaTime() < self.notchKeepAliveUntil {
+                self.notchCollapseWork = nil
+                self.scheduleNotchRetract()   // extended by a fresh interaction
+                return
+            }
+            self.notchExpanded = false
+            self.notchCollapseWork = nil
+        }
+        notchCollapseWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+    }
+
+    /// Reset the 15s keep-alive so the notch stays down while the user is
+    /// actively engaging the briefing.
+    private func bumpNotchKeepAlive() {
+        guard collapsed else { return }
+        notchKeepAliveUntil = CACurrentMediaTime() + notchKeepAlive
+        notchCollapseWork?.cancel()
+        notchCollapseWork = nil
+        if !notchExpanded { notchExpanded = true }
+    }
+
+    // MARK: Project Pulse briefing
+
+    /// Feed the briefing engine and mirror its display state; route any fired
+    /// action. Stands down the other collapsed-mode overlays.
+    private func driveProjectBriefing(hand: DetectedHand?, frameSize: CGSize,
+                                      now: CFTimeInterval) {
+        projectBriefing.update(pulses: ProjectPulseEngine.shared.pulses, hand: hand,
+                               videoSize: frameSize, now: now)
+        pulseBubbles = projectBriefing.bubbles
+        pulseActionChips = projectBriefing.actionChips
+        pulseSummonProgress = projectBriefing.summonProgress
+        pulseDismissProgress = projectBriefing.dismissProgress
+        if let action = projectBriefing.firedAction { handlePulseAction(action) }
+        pulseGreeting = projectBriefing.isActive ? "" : pulseGreetingLine()
+
+        // A hand in frame while the briefing is open counts as interaction and
+        // resets the 15s keep-alive; when the hand leaves, the countdown runs
+        // from the last interaction so the panel doesn't retract mid-task.
+        if hand != nil && projectBriefing.isActive {
+            bumpNotchKeepAlive()
+        }
+
+        // Other collapsed systems stand down while the briefing owns the frame.
+        if !claudeOrbs.isEmpty { claudeOrbs = [] }
+        if !claudeReplyOrbs.isEmpty { claudeReplyOrbs = [] }
+        claudeComposing = false
+        claudeGenerating = false
+        claudeFistProgress = 0
+        orbs = []
+        mouseOrb = nil
+        statusText = pulseStatus()
+    }
+
+    private func clearProjectBriefingIfNeeded() {
+        guard projectBriefing.isActive || !pulseBubbles.isEmpty
+            || pulseSummonProgress > 0 else { return }
+        projectBriefing.reset()
+        pulseBubbles = []
+        pulseActionChips = []
+        pulseSummonProgress = 0
+        pulseDismissProgress = 0
+    }
+
+    /// A short, friendly line for Palmo's idle speech bubble, favouring what
+    /// needs attention, otherwise the most recent committed work.
+    private func pulseGreetingLine() -> String {
+        let pulses = ProjectPulseEngine.shared.pulses
+        guard !pulses.isEmpty else { return "Hi! Start a Claude session and I'll track it here." }
+        let needs = ProjectPulseEngine.shared.attentionCount
+        if needs > 0 {
+            let noun = needs == 1 ? "project needs" : "projects need"
+            return "\(needs) \(noun) you — point at me to see."
+        }
+        if let working = pulses.first(where: { $0.state == .working }) {
+            return "Claude's busy in \(working.name)…"
+        }
+        // Nothing urgent — surface the most recent committed work.
+        let recent = pulses.max { $0.updatedAt < $1.updatedAt } ?? pulses[0]
+        if !recent.recentCommit.isEmpty {
+            return "Latest in \(recent.name): “\(recent.recentCommit)”"
+        }
+        return "All caught up across \(pulses.count) project\(pulses.count == 1 ? "" : "s") ✨"
+    }
+
+    private func pulseStatus() -> String {
+        let pulses = ProjectPulseEngine.shared.pulses
+        if pulses.isEmpty { return "No projects yet — start a Claude session" }
+        if projectBriefing.expandedID != nil {
+            return "Point at an action, or point back at the card to close"
+        }
+        if !projectBriefing.isActive {
+            return "Point at Palmo for 1s to see your projects"
+        }
+        let needs = ProjectPulseEngine.shared.attentionCount
+        if needs > 0 {
+            let noun = needs == 1 ? "project needs" : "projects need"
+            return "\(needs) \(noun) you — point to open"
+        }
+        return "Point at a project to see its status"
+    }
+
+    /// Route a briefing action into the existing session / terminal machinery,
+    /// then close the briefing for a clean exit.
+    private func handlePulseAction(_ action: PulseAction) {
+        switch action {
+        case .acknowledge(let cwd):
+            let target = (cwd as NSString).standardizingPath
+            for session in claudeSessions.sessions
+            where (session.cwd as NSString).standardizingPath == target && session.isDone {
+                claudeSessions.acknowledge(session.id)
+            }
+            commandToast = "✅ Marked reviewed"
+        case .openTerminal(let cwd):
+            openTerminal(cwd: cwd)
+            commandToast = "💻 Opened Terminal"
+        case .tickets(let cwd):
+            if let project = projects.projects.first(where: {
+                ($0.cwd as NSString).standardizingPath == (cwd as NSString).standardizingPath
+            }) {
+                // Ticket cards live in windowed mode; leave collapse and generate.
+                collapsed = false
+                requestTickets(for: project)
+                commandToast = "🎟️ Finding tickets for \(project.name)"
+            }
+        case .reply(let cwd):
+            // Hand off to the on-device compose flow via the Claude session orbs.
+            openTerminal(cwd: cwd)
+            commandToast = "💬 Opened session to reply"
+        }
+        scheduleToastDismiss()
+        projectBriefing.reset()
+        pulseBubbles = []
+        pulseActionChips = []
+    }
+
+    /// Open Terminal at a working directory.
+    private func openTerminal(cwd: String) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        process.arguments = ["-a", "Terminal", cwd]
+        try? process.run()
     }
 
     private func mouseStatus(hand: DetectedHand?) -> String {

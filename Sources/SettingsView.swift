@@ -181,6 +181,22 @@ private struct TicketSettingsForm: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            Section("Project briefing") {
+                Toggle("Show project briefing in collapse mode", isOn: $settings.projectPulseEnabled)
+                Text("Point at Palmo in the collapsed overlay and he'll surface a status bubble for each project — recent commits plus live Claude sessions. Point at a bubble to expand it and act.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if settings.projectPulseEnabled {
+                    Picker("Status narration", selection: $settings.pulseNarratorMode) {
+                        ForEach(PulseNarratorMode.allCases, id: \.self) { mode in
+                            Text(mode.label).tag(mode)
+                        }
+                    }
+                    Text("Automatic prefers the on-device model, then OpenRouter, then plain templates. On-device keeps everything local; OpenRouter sends project facts to the cloud.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
             if settings.ticketSuggestionsEnabled {
                 Section("OpenRouter") {
                     SecureField("API key", text: $settings.openRouterKey)

@@ -2,6 +2,22 @@ import SwiftUI
 import ServiceManagement
 import CoreGraphics
 
+/// Where a project's status prose is written. `auto` prefers the on-device
+/// model, then OpenRouter, then deterministic templates.
+enum PulseNarratorMode: String, Codable, CaseIterable {
+    case auto
+    case onDevice
+    case openRouter
+
+    var label: String {
+        switch self {
+        case .auto:       return "Automatic"
+        case .onDevice:   return "On-device"
+        case .openRouter: return "OpenRouter"
+        }
+    }
+}
+
 /// Persistent user settings, backed by UserDefaults, published for UI + engines.
 @MainActor
 final class AppSettings: ObservableObject {
@@ -61,6 +77,17 @@ final class AppSettings: ObservableObject {
         didSet { d.set(ticketSuggestionsEnabled, forKey: "ticketSuggestionsEnabled") }
     }
 
+    // MARK: Project Pulse
+
+    /// Master switch for the project-pulse briefing feature (opt-in).
+    @Published var projectPulseEnabled: Bool {
+        didSet { d.set(projectPulseEnabled, forKey: "projectPulseEnabled") }
+    }
+    /// Which narrator backend writes the status prose.
+    @Published var pulseNarratorMode: PulseNarratorMode {
+        didSet { d.set(pulseNarratorMode.rawValue, forKey: "pulseNarratorMode") }
+    }
+
     // MARK: General
 
     @Published var onboardingDone: Bool {
@@ -90,6 +117,9 @@ final class AppSettings: ObservableObject {
         openRouterKey = d.string(forKey: "openRouterKey") ?? ""
         openRouterModel = d.string(forKey: "openRouterModel") ?? "anthropic/claude-sonnet-4.5"
         ticketSuggestionsEnabled = d.object(forKey: "ticketSuggestionsEnabled") as? Bool ?? false
+        projectPulseEnabled = d.object(forKey: "projectPulseEnabled") as? Bool ?? true
+        pulseNarratorMode = PulseNarratorMode(rawValue: d.string(forKey: "pulseNarratorMode") ?? "")
+            ?? .auto
         onboardingDone = d.bool(forKey: "onboardingDone")
         launchAtLogin = d.bool(forKey: "launchAtLogin")
         let stored = d.stringArray(forKey: "orbAppBundleIDs") ?? []
